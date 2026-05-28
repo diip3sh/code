@@ -80,7 +80,6 @@ type DiffSurfaceMode = "review" | "summary" | "total";
 type DiffThemeType = "light" | "dark";
 
 function buildDiffPanelUnsafeCSS(theme: "light" | "dark"): string {
-  const titleColor = theme === "dark" ? "#6073CC" : "#526FFF";
   return `
 :host {
   /* Route the entire diff viewer through the chat code font so custom code fonts reach line numbers too. */
@@ -133,18 +132,20 @@ function buildDiffPanelUnsafeCSS(theme: "light" | "dark"): string {
 
 [data-file-info] {
   font-family: var(--font-chat-code-family) !important;
-  font-size: var(--app-font-size-chat-code, 11px) !important;
-  background-color: color-mix(in srgb, var(--card) 94%, var(--foreground)) !important;
-  border-block-color: var(--border) !important;
-  color: var(--foreground) !important;
+  font-size: var(--app-font-size-chat-code, 12px) !important;
+  background-color: var(--color-background) !important;
+  color: var(--color-red-500) !important;
+}
+
+[data-file-info] * {
+  color: var(--color-red-500) !important;
 }
 
 [data-diffs-header] {
   position: sticky !important;
   top: 0;
   z-index: 4;
-  background-color: color-mix(in srgb, var(--card) 94%, var(--foreground)) !important;
-  border-bottom: 1px solid var(--border) !important;
+  background-color: var(--color-background) !important;
   cursor: pointer;
 }
 
@@ -154,11 +155,19 @@ function buildDiffPanelUnsafeCSS(theme: "light" | "dark"): string {
 }
 
 [data-title] {
-  font-family: var(--font-chat-code-family) !important;
+  font-family: var(--app-font-chat-code-family) !important;
   font-size: var(--app-font-size-chat-code, 11px) !important;
+  font-weight: 500 !important;
   cursor: pointer;
-  color: ${titleColor} !important;
+  color: var(--color-text) !important;
 }
+
+[data-file],
+[data-diff] {
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  overflow: hidden !important;
+}
+
 `;
 }
 
@@ -216,7 +225,10 @@ export default function DiffPanel({
     strict: false,
     select: (params) => (params.threadId ? ThreadId.makeUnsafe(params.threadId) : null),
   });
-  const diffSearch = useSearch({ strict: false, select: (search) => parseDiffRouteSearch(search) });
+  const diffSearch = useSearch({
+    strict: false,
+    select: (search) => parseDiffRouteSearch(search),
+  });
   const diffOpen = panelState ? panelState.panel === "diff" : diffSearch.diff === "1";
   const activeThreadId = controlledThreadId ?? routeThreadId;
   const serverThread = useStore(
@@ -399,8 +411,12 @@ export default function DiffPanel({
     if (!hasResolvedRepoPatch || !activeCwd) {
       return;
     }
-    void queryClient.invalidateQueries({ queryKey: gitQueryKeys.status(activeCwd) });
-    void queryClient.invalidateQueries({ queryKey: gitQueryKeys.branches(activeCwd) });
+    void queryClient.invalidateQueries({
+      queryKey: gitQueryKeys.status(activeCwd),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: gitQueryKeys.branches(activeCwd),
+    });
   }, [activeCwd, hasResolvedRepoPatch, queryClient, repoPatch]);
 
   useEffect(() => {
@@ -683,7 +699,11 @@ export default function DiffPanel({
     if (!element) return;
 
     const selectedChip = element.querySelector<HTMLElement>("[data-turn-chip-selected='true']");
-    selectedChip?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    selectedChip?.scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+      behavior: "smooth",
+    });
   }, [selectedTurn?.turnId, selectedTurnId]);
 
   const headerRow = (

@@ -2259,7 +2259,10 @@ export default function ChatView({
     const assistantMessages: { id: MessageId; turnId: TurnId | null }[] = [];
     for (const message of timelineMessages) {
       if (message.role !== "assistant") continue;
-      assistantMessages.push({ id: message.id, turnId: message.turnId ?? null });
+      assistantMessages.push({
+        id: message.id,
+        turnId: message.turnId ?? null,
+      });
     }
     return buildTurnDiffSummaryByAssistantMessageId({
       turnDiffSummaries,
@@ -2948,9 +2951,15 @@ export default function ChatView({
       return;
     }
 
-    setSecondaryChromeState({ threadId: secondaryChromeThreadId, ready: false });
+    setSecondaryChromeState({
+      threadId: secondaryChromeThreadId,
+      ready: false,
+    });
     const frame = window.requestAnimationFrame(() => {
-      setSecondaryChromeState({ threadId: secondaryChromeThreadId, ready: true });
+      setSecondaryChromeState({
+        threadId: secondaryChromeThreadId,
+        ready: true,
+      });
     });
     return () => {
       window.cancelAnimationFrame(frame);
@@ -7985,8 +7994,8 @@ export default function ChatView({
       {/* Top bar */}
       <header
         className={cn(
-          "border-b border-[color:var(--color-border-light)] px-3 sm:px-5",
-          isElectron ? "drag-region flex h-[52px] items-center" : "py-2 sm:py-3",
+          "border-b-1  border-dashed px-3 sm:px-5",
+          isElectron ? "drag-region flex h-[52px] items-center " : "py-2 sm:py-3",
           desktopTopBarTrafficLightGutterClassName,
         )}
       >

@@ -1001,12 +1001,14 @@ function SortableProjectItem({
 function SidebarSegmentedPicker({
   activeView,
   onSelectView,
+  className,
 }: {
   activeView: "threads" | "workspace";
   onSelectView: (view: "threads" | "workspace") => void;
+  className?: string;
 }) {
   return (
-    <div className="px-3 pb-2.5">
+    <div className={cn("px-3 pb-2.5", className)}>
       <div className="inline-flex w-full rounded-md bg-[var(--color-background-elevated-secondary)] p-0.5">
         {(["threads", "workspace"] as const).map((view) => {
           const active = activeView === view;
@@ -1108,7 +1110,9 @@ export default function Sidebar() {
   const homeDir = useWorkspaceStore((store) => store.homeDir);
   const navigate = useNavigate();
   const pathname = useLocation({ select: (loc) => loc.pathname });
-  const isOnSettings = useLocation({ select: (loc) => loc.pathname === "/settings" });
+  const isOnSettings = useLocation({
+    select: (loc) => loc.pathname === "/settings",
+  });
   const isOnWorkspace = pathname.startsWith("/workspace");
   const { settings: appSettings, updateSettings } = useAppSettings();
   const { handleNewThread } = useHandleNewThread();
@@ -1250,7 +1254,10 @@ export default function Sidebar() {
   const autoRevealedSubagentThreadIdRef = useRef<ThreadId | null>(null);
   const renamingCommittedRef = useRef(false);
   const renamingInputRef = useRef<HTMLInputElement | null>(null);
-  const lastThreadRenameTapRef = useRef<{ threadId: ThreadId; timestamp: number } | null>(null);
+  const lastThreadRenameTapRef = useRef<{
+    threadId: ThreadId;
+    timestamp: number;
+  } | null>(null);
   const renamingProjectCommittedRef = useRef(false);
   const renamingProjectInputRef = useRef<HTMLInputElement | null>(null);
   const dragInProgressRef = useRef(false);
@@ -1410,7 +1417,10 @@ export default function Sidebar() {
     (threadId: ThreadId) => {
       const isPinned = pinnedThreadIdSet.has(threadId);
       void setThreadPinned(threadId, !isPinned).catch((error) => {
-        console.error("Failed to update pinned thread state", { threadId, error });
+        console.error("Failed to update pinned thread state", {
+          threadId,
+          error,
+        });
         toastManager.add({
           type: "error",
           title: isPinned ? "Unable to unpin thread" : "Unable to pin thread",
@@ -2128,7 +2138,10 @@ export default function Sidebar() {
       });
 
       if (outcome === "empty") {
-        toastManager.add({ type: "warning", title: "Thread title cannot be empty" });
+        toastManager.add({
+          type: "warning",
+          title: "Thread title cannot be empty",
+        });
         finishRename();
         return;
       }
@@ -2379,7 +2392,9 @@ export default function Sidebar() {
     ],
   );
 
-  const { copyToClipboard: copyThreadIdToClipboard } = useCopyToClipboard<{ threadId: ThreadId }>({
+  const { copyToClipboard: copyThreadIdToClipboard } = useCopyToClipboard<{
+    threadId: ThreadId;
+  }>({
     onCopy: (ctx) => {
       toastManager.add({
         type: "success",
@@ -2395,7 +2410,9 @@ export default function Sidebar() {
       });
     },
   });
-  const { copyToClipboard: copyPathToClipboard } = useCopyToClipboard<{ path: string }>({
+  const { copyToClipboard: copyPathToClipboard } = useCopyToClipboard<{
+    path: string;
+  }>({
     onCopy: (ctx) => {
       toastManager.add({
         type: "success",
@@ -3503,7 +3520,10 @@ export default function Sidebar() {
         continue;
       }
       void setThreadPinned(threadId, true).catch((error) => {
-        console.error("Failed to migrate pinned thread state", { threadId, error });
+        console.error("Failed to migrate pinned thread state", {
+          threadId,
+          error,
+        });
       });
     }
   }, [persistedPinnedThreadIds, setThreadPinned, sidebarThreads, threadsHydrated]);
@@ -3956,7 +3976,9 @@ export default function Sidebar() {
         data-testid={`thread-hover-actions-${input.threadId}`}
         className="pointer-events-none absolute inset-y-0 right-0 my-auto inline-flex items-center opacity-0 transition-opacity group-hover/thread-row:pointer-events-auto group-hover/thread-row:opacity-100 group-focus-within/thread-row:pointer-events-auto group-focus-within/thread-row:opacity-100"
       >
-        {renderThreadArchiveAction(input.threadId, input.toneClassName, { compact })}
+        {renderThreadArchiveAction(input.threadId, input.toneClassName, {
+          compact,
+        })}
       </div>
     );
   }
@@ -5268,8 +5290,8 @@ export default function Sidebar() {
         render={
           <div className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 font-system-ui">
             <div className="flex min-w-0 items-center gap-1">
-              <T3Wordmark />
-              <span className="truncate text-[14px] font-normal text-foreground/89">Code</span>
+              {/*<T3Wordmark />*/}
+              <span className="truncate text-[14px] text-foreground/89 font-semibold">Code</span>
             </div>
           </div>
         }
@@ -5308,7 +5330,16 @@ export default function Sidebar() {
     </div>
   );
 
-  const sidebarBrand = <div className="flex min-w-0 px-4 pt-0 pb-2">{brandWordmark}</div>;
+  const sidebarBrand = (
+    <div className="flex min-w-0 items-center justify-between gap-3 px-4 pt-0 pb-2">
+      {brandWordmark}
+      <SidebarSegmentedPicker
+        activeView={isOnWorkspace ? "workspace" : "threads"}
+        onSelectView={handleSidebarViewChange}
+        className="w-[168px] shrink-0 px-0 pb-0"
+      />
+    </div>
+  );
 
   return (
     <>
@@ -5370,7 +5401,7 @@ export default function Sidebar() {
               </SidebarMenuItem>
             </SidebarMenu>
 
-            <div className="-mx-1.5 my-1.5 h-px bg-border/70" />
+            <div className="-mx-1.5 my-1.5 h-px border-b border-dashed" />
             <div className="space-y-4 pt-2">
               {SETTINGS_NAV_GROUPS.map((group, groupIndex) => {
                 const items = SETTINGS_NAV_ITEMS.filter((item) => item.group === group.id);
@@ -5433,10 +5464,12 @@ export default function Sidebar() {
         ) : (
           <>
             {isElectron ? sidebarBrand : null}
-            <SidebarSegmentedPicker
-              activeView={isOnWorkspace ? "workspace" : "threads"}
-              onSelectView={handleSidebarViewChange}
-            />
+            {isElectron ? null : (
+              <SidebarSegmentedPicker
+                activeView={isOnWorkspace ? "workspace" : "threads"}
+                onSelectView={handleSidebarViewChange}
+              />
+            )}
             {/* Primary sidebar actions stay limited to features we currently ship. */}
             <SidebarGroup className="px-1.5 pt-1 pb-1.5">
               <SidebarMenu className="gap-0.5">
@@ -5596,7 +5629,7 @@ export default function Sidebar() {
                     <div className="-mx-1.5 my-1.5 h-px bg-border/70" />
                   </>
                 ) : (
-                  <div className="-mx-1.5 my-1 h-px bg-border" />
+                  <div className="-mx-1.5 my-1 h-px border-b border-dashed" />
                 )}
                 <div className="my-1 flex items-center justify-between px-2 py-1">
                   <span className="text-[length:var(--app-font-size-ui,12px)] font-normal text-muted-foreground/58">
@@ -5762,7 +5795,7 @@ export default function Sidebar() {
                     onDragEnd={handleProjectDragEnd}
                     onDragCancel={handleProjectDragCancel}
                   >
-                    <SidebarMenu className="gap-3">
+                    <SidebarMenu className="-gap-0.5">
                       <SortableContext
                         items={sortedProjects.map((project) => project.id)}
                         strategy={verticalListSortingStrategy}

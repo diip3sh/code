@@ -983,7 +983,11 @@ export default function GitActionsControl({
       });
 
       try {
-        await api.git.createBranch({ cwd: gitCwd, branch: trimmedName, publish: hasOriginRemote });
+        await api.git.createBranch({
+          cwd: gitCwd,
+          branch: trimmedName,
+          publish: hasOriginRemote,
+        });
         await api.git.checkout({ cwd: gitCwd, branch: trimmedName });
         if (activeThreadId) {
           void api.orchestration
@@ -1212,7 +1216,7 @@ export default function GitActionsControl({
       {!isRepo ? (
         <Button
           variant="outline"
-          size="xs"
+          size="sm"
           className={headerGhostClass}
           disabled={initMutation.isPending}
           onClick={() => initMutation.mutate()}
@@ -1233,7 +1237,7 @@ export default function GitActionsControl({
                       "cursor-not-allowed rounded-e-none border-e-0 opacity-64 before:rounded-e-none",
                       headerGhostClass,
                     )}
-                    size={hideQuickActionLabel ? "icon-xs" : "xs"}
+                    size={hideQuickActionLabel ? "icon-sm" : "sm"}
                     variant="outline"
                     title={quickAction.label}
                   />
@@ -1251,7 +1255,7 @@ export default function GitActionsControl({
           ) : (
             <Button
               variant="outline"
-              size={hideQuickActionLabel ? "icon-xs" : "xs"}
+              size={hideQuickActionLabel ? "icon-sm" : "sm"}
               className={headerGhostClass}
               disabled={isGitActionRunning || quickAction.disabled}
               aria-label={quickAction.label}
@@ -1274,7 +1278,7 @@ export default function GitActionsControl({
               render={
                 <Button
                   aria-label="Git action options"
-                  size="icon-xs"
+                  size="icon-sm"
                   variant="outline"
                   className={headerGhostClass}
                 />
@@ -1286,7 +1290,7 @@ export default function GitActionsControl({
             <MenuPopup
               align="end"
               side="bottom"
-              className="w-50 rounded-lg border-[color:var(--color-border)] bg-[var(--composer-surface)] shadow-lg"
+              className="w-50 rounded-lg border-border bg-[var(--composer-surface)] shadow-lg"
             >
               <MenuGroup>
                 <MenuGroupLabel>Git actions</MenuGroupLabel>
@@ -1334,12 +1338,12 @@ export default function GitActionsControl({
                   </p>
                 )}
               {isGitStatusOutOfSync && (
-                <p className="px-3 py-1.5 text-xs text-muted-foreground">
+                <p className="px-3 py-1.5 text-sm text-muted-foreground">
                   Refreshing git status...
                 </p>
               )}
               {gitStatusError && (
-                <p className="px-3 py-1.5 text-xs text-destructive">{gitStatusError.message}</p>
+                <p className="px-3 py-1.5 text-sm text-destructive">{gitStatusError.message}</p>
               )}
             </MenuPopup>
           </Menu>
@@ -1399,7 +1403,7 @@ export default function GitActionsControl({
                   {allFiles.length > 0 && (
                     <Button
                       variant="ghost"
-                      size="xs"
+                      size="sm"
                       onClick={() => setIsEditingFiles((prev) => !prev)}
                     >
                       {isEditingFiles ? "Done" : "Edit"}

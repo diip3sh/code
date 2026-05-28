@@ -47,7 +47,7 @@ const FileIconImage = memo(function FileIconImage(props: {
       src={iconUrl}
       alt=""
       aria-hidden="true"
-      className={cn("size-4 shrink-0", props.className)}
+      className={cn("size-5 shrink-0", props.className)}
       loading="lazy"
       onError={() => setFailedIconUrl(iconUrl)}
     />

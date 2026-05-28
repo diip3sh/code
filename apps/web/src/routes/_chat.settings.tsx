@@ -184,7 +184,10 @@ type InstallProviderSettings = {
   agentDirDescription?: ReactNode;
 };
 
-const PROVIDER_VISIBILITY_OPTIONS: ReadonlyArray<{ provider: ProviderKind; title: string }> = [
+const PROVIDER_VISIBILITY_OPTIONS: ReadonlyArray<{
+  provider: ProviderKind;
+  title: string;
+}> = [
   { provider: "codex", title: PROVIDER_DISPLAY_NAMES.codex },
   { provider: "claudeAgent", title: PROVIDER_DISPLAY_NAMES.claudeAgent },
   { provider: "cursor", title: PROVIDER_DISPLAY_NAMES.cursor },
@@ -260,9 +263,15 @@ const INSTALL_PROVIDER_SETTINGS: readonly InstallProviderSettings[] = [
     provider: "codex",
     title: "Codex",
     docs: [
-      { label: "Install", href: "https://help.openai.com/en/articles/11096431" },
+      {
+        label: "Install",
+        href: "https://help.openai.com/en/articles/11096431",
+      },
       { label: "Update", href: "https://help.openai.com/en/articles/11096431" },
-      { label: "Config", href: "https://github.com/openai/codex/blob/main/docs/config.md" },
+      {
+        label: "Config",
+        href: "https://github.com/openai/codex/blob/main/docs/config.md",
+      },
     ],
     binaryPathKey: "codexBinaryPath",
     binaryPlaceholder: "Codex binary path",
@@ -279,8 +288,14 @@ const INSTALL_PROVIDER_SETTINGS: readonly InstallProviderSettings[] = [
     provider: "claudeAgent",
     title: "Claude",
     docs: [
-      { label: "Install", href: "https://code.claude.com/docs/en/installation" },
-      { label: "Update", href: "https://code.claude.com/docs/en/installation#update-claude-code" },
+      {
+        label: "Install",
+        href: "https://code.claude.com/docs/en/installation",
+      },
+      {
+        label: "Update",
+        href: "https://code.claude.com/docs/en/installation#update-claude-code",
+      },
       { label: "Config", href: "https://code.claude.com/docs/en/settings" },
     ],
     binaryPathKey: "claudeBinaryPath",
@@ -296,7 +311,10 @@ const INSTALL_PROVIDER_SETTINGS: readonly InstallProviderSettings[] = [
     title: "Cursor",
     docs: [
       { label: "Install", href: "https://docs.cursor.com/en/cli/installation" },
-      { label: "Update", href: "https://docs.cursor.com/en/cli/installation#updates" },
+      {
+        label: "Update",
+        href: "https://docs.cursor.com/en/cli/installation#updates",
+      },
       { label: "Config", href: "https://docs.cursor.com/en/cli/overview" },
     ],
     binaryPathKey: "cursorBinaryPath",
@@ -314,7 +332,10 @@ const INSTALL_PROVIDER_SETTINGS: readonly InstallProviderSettings[] = [
     provider: "gemini",
     title: "Gemini",
     docs: [
-      { label: "Install", href: "https://google-gemini.github.io/gemini-cli/docs/get-started/" },
+      {
+        label: "Install",
+        href: "https://google-gemini.github.io/gemini-cli/docs/get-started/",
+      },
       { label: "Update", href: "https://github.com/google-gemini/gemini-cli" },
       {
         label: "Config",
@@ -334,7 +355,10 @@ const INSTALL_PROVIDER_SETTINGS: readonly InstallProviderSettings[] = [
     title: "Grok",
     docs: [
       { label: "Install", href: "https://docs.x.ai/build/overview" },
-      { label: "Headless", href: "https://docs.x.ai/build/cli/headless-scripting" },
+      {
+        label: "Headless",
+        href: "https://docs.x.ai/build/cli/headless-scripting",
+      },
       { label: "Config", href: "https://docs.x.ai/build/overview" },
     ],
     binaryPathKey: "grokBinaryPath",
@@ -715,7 +739,10 @@ function SettingsRouteView() {
     }
 
     const frame = window.requestAnimationFrame(() => {
-      providerUpdatesRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+      providerUpdatesRef.current?.scrollIntoView({
+        block: "start",
+        behavior: "smooth",
+      });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [serverConfigQuery.data?.providers, shouldFocusProviderUpdates]);
@@ -983,7 +1010,9 @@ function SettingsRouteView() {
       }
       setUpdatingProviders((current) => new Set(current).add(provider));
       try {
-        const result = await ensureNativeApi().server.updateProvider({ provider });
+        const result = await ensureNativeApi().server.updateProvider({
+          provider,
+        });
         const refreshedProvider = result.providers.find((status) => status.provider === provider);
         const failureMessage = providerUpdateFailureMessage(refreshedProvider);
         if (failureMessage) {
@@ -1092,7 +1121,11 @@ function SettingsRouteView() {
     const body = "Notification test for chats and terminal agents.";
 
     if (window.desktopBridge) {
-      const shown = await window.desktopBridge.notifications.show({ title, body, silent: false });
+      const shown = await window.desktopBridge.notifications.show({
+        title,
+        body,
+        silent: false,
+      });
       toastManager.add({
         type: shown ? "success" : "warning",
         title: shown ? "Test notification sent" : "Notifications unavailable",
@@ -1114,7 +1147,10 @@ function SettingsRouteView() {
       return;
     }
 
-    const notification = new Notification(title, { body, tag: "dpcode:test-notification" });
+    const notification = new Notification(title, {
+      body,
+      tag: "dpcode:test-notification",
+    });
     notification.addEventListener("click", () => {
       window.focus();
     });
@@ -1335,7 +1371,11 @@ function SettingsRouteView() {
               settings.defaultProvider !== defaults.defaultProvider ? (
                 <SettingResetButton
                   label="default provider"
-                  onClick={() => updateSettings({ defaultProvider: defaults.defaultProvider })}
+                  onClick={() =>
+                    updateSettings({
+                      defaultProvider: defaults.defaultProvider,
+                    })
+                  }
                 />
               ) : null
             }
@@ -1694,7 +1734,9 @@ function SettingsRouteView() {
                 <SettingResetButton
                   label="code font"
                   onClick={() =>
-                    updateSettings({ chatCodeFontFamily: defaults.chatCodeFontFamily })
+                    updateSettings({
+                      chatCodeFontFamily: defaults.chatCodeFontFamily,
+                    })
                   }
                 />
               ) : null
@@ -1854,7 +1896,9 @@ function SettingsRouteView() {
               <Switch
                 checked={settings.enableTaskCompletionToasts}
                 onCheckedChange={(checked) =>
-                  updateSettings({ enableTaskCompletionToasts: Boolean(checked) })
+                  updateSettings({
+                    enableTaskCompletionToasts: Boolean(checked),
+                  })
                 }
                 aria-label="Activity toast notifications"
               />
@@ -2814,22 +2858,38 @@ function SettingsRouteView() {
                                   onChange={(event) =>
                                     updateSettings(
                                       providerSettings.binaryPathKey === "claudeBinaryPath"
-                                        ? { claudeBinaryPath: event.target.value }
+                                        ? {
+                                            claudeBinaryPath: event.target.value,
+                                          }
                                         : providerSettings.binaryPathKey === "cursorBinaryPath"
-                                          ? { cursorBinaryPath: event.target.value }
+                                          ? {
+                                              cursorBinaryPath: event.target.value,
+                                            }
                                           : providerSettings.binaryPathKey === "geminiBinaryPath"
-                                            ? { geminiBinaryPath: event.target.value }
+                                            ? {
+                                                geminiBinaryPath: event.target.value,
+                                              }
                                             : providerSettings.binaryPathKey === "grokBinaryPath"
-                                              ? { grokBinaryPath: event.target.value }
+                                              ? {
+                                                  grokBinaryPath: event.target.value,
+                                                }
                                               : providerSettings.binaryPathKey === "kiloBinaryPath"
-                                                ? { kiloBinaryPath: event.target.value }
+                                                ? {
+                                                    kiloBinaryPath: event.target.value,
+                                                  }
                                                 : providerSettings.binaryPathKey ===
                                                     "openCodeBinaryPath"
-                                                  ? { openCodeBinaryPath: event.target.value }
+                                                  ? {
+                                                      openCodeBinaryPath: event.target.value,
+                                                    }
                                                   : providerSettings.binaryPathKey ===
                                                       "piBinaryPath"
-                                                    ? { piBinaryPath: event.target.value }
-                                                    : { codexBinaryPath: event.target.value },
+                                                    ? {
+                                                        piBinaryPath: event.target.value,
+                                                      }
+                                                    : {
+                                                        codexBinaryPath: event.target.value,
+                                                      },
                                     )
                                   }
                                   placeholder={providerSettings.binaryPlaceholder}
@@ -2943,8 +3003,12 @@ function SettingsRouteView() {
                                     onChange={(event) =>
                                       updateSettings(
                                         providerSettings.serverUrlKey === "kiloServerUrl"
-                                          ? { kiloServerUrl: event.target.value }
-                                          : { openCodeServerUrl: event.target.value },
+                                          ? {
+                                              kiloServerUrl: event.target.value,
+                                            }
+                                          : {
+                                              openCodeServerUrl: event.target.value,
+                                            },
                                       )
                                     }
                                     placeholder={providerSettings.serverUrlPlaceholder}
@@ -2977,8 +3041,12 @@ function SettingsRouteView() {
                                     onChange={(event) =>
                                       updateSettings(
                                         providerSettings.serverPasswordKey === "kiloServerPassword"
-                                          ? { kiloServerPassword: event.target.value }
-                                          : { openCodeServerPassword: event.target.value },
+                                          ? {
+                                              kiloServerPassword: event.target.value,
+                                            }
+                                          : {
+                                              openCodeServerPassword: event.target.value,
+                                            },
                                       )
                                     }
                                     placeholder={providerSettings.serverPasswordPlaceholder}

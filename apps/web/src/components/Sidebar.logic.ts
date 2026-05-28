@@ -873,7 +873,10 @@ export function sortThreadsForSidebar<T extends { id: Thread["id"] } & SidebarTh
 }
 
 export function getFallbackThreadIdAfterDelete<
-  T extends { id: Thread["id"]; projectId: Thread["projectId"] } & SidebarThreadSortInput,
+  T extends {
+    id: Thread["id"];
+    projectId: Thread["projectId"];
+  } & SidebarThreadSortInput,
 >(input: {
   threads: readonly T[];
   deletedThreadId: T["id"];

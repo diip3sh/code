@@ -209,7 +209,7 @@ export const ChatHeader = memo(function ChatHeader({
   };
 
   return (
-    <div ref={headerRef} className="flex min-w-0 flex-1 items-center gap-2">
+    <div ref={headerRef} className="flex min-w-0 flex-1 h-full items-center gap-2">
       <div
         className={cn(
           "flex min-w-0 flex-1 items-center overflow-hidden",
@@ -325,7 +325,7 @@ export const ChatHeader = memo(function ChatHeader({
                     render={
                       <Button
                         type="button"
-                        size="xs"
+                        size="sm"
                         variant="outline"
                         className={cn(
                           "shrink-0 bg-transparent not-disabled:before:shadow-none dark:not-disabled:before:shadow-none [:hover,[data-pressed]]:bg-[var(--sidebar-accent)] dark:[:hover,[data-pressed]]:bg-[var(--sidebar-accent)]",
@@ -400,7 +400,7 @@ export const ChatHeader = memo(function ChatHeader({
             <MenuTrigger
               render={
                 <Button
-                  size="icon-xs"
+                  size="icon-sm"
                   variant="outline"
                   className="shrink-0 bg-transparent not-disabled:before:shadow-none dark:not-disabled:before:shadow-none [:hover,[data-pressed]]:bg-[var(--sidebar-accent)] dark:[:hover,[data-pressed]]:bg-[var(--sidebar-accent)]"
                   aria-label="Panel toggles"
@@ -505,7 +505,7 @@ export const ChatHeader = memo(function ChatHeader({
                 onPressedChange={onToggleDiff}
                 aria-label="Toggle diff panel"
                 variant="default"
-                size="xs"
+                size="sm"
                 disabled={!isGitRepo || (diffDisabledReason !== null && !diffOpen)}
               >
                 {showDiffTotals ? (

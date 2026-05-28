@@ -131,7 +131,10 @@ const AgentTaskIcon: LucideIcon = (props) => (
   <RiRobot3Line className={props.className} style={props.style} />
 );
 
-const DEFAULT_AGENT_COLOR = { bg: "rgb(245 158 11 / 0.15)", text: "rgb(245 158 11)" };
+const DEFAULT_AGENT_COLOR = {
+  bg: "rgb(245 158 11 / 0.15)",
+  text: "rgb(245 158 11)",
+};
 const AGENT_COLOR_STYLES: Record<string, { bg: string; text: string }> = {
   violet: { bg: "rgb(139 92 246 / 0.15)", text: "rgb(139 92 246)" },
   fuchsia: { bg: "rgb(217 70 239 / 0.15)", text: "rgb(217 70 239)" },
@@ -633,7 +636,9 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                     </div>
                     <p
                       className="font-system-ui text-right tabular-nums text-muted-foreground/45"
-                      style={{ fontSize: `${appTypographyScale.uiTimestampPx}px` }}
+                      style={{
+                        fontSize: `${appTypographyScale.uiTimestampPx}px`,
+                      }}
                     >
                       {formatShortTimestamp(row.message.createdAt, timestampFormat)}
                     </p>
@@ -780,7 +785,9 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                           <button
                             type="button"
                             className="text-muted-foreground/50 transition-colors duration-150 hover:text-foreground/72"
-                            style={{ fontSize: `${normalizedChatFontSizePx}px` }}
+                            style={{
+                              fontSize: `${normalizedChatFontSizePx}px`,
+                            }}
                             onClick={() => handleToggleWorkGroup(inlineToolGroupId)}
                           >
                             {inlineToolExpanded
@@ -819,7 +826,9 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                         {(file.additions ?? 0) + (file.deletions ?? 0) > 0 ? (
                           <span
                             className="font-chat-code shrink-0 tabular-nums whitespace-nowrap"
-                            style={{ fontSize: `${normalizedChatFontSizePx}px` }}
+                            style={{
+                              fontSize: `${normalizedChatFontSizePx}px`,
+                            }}
                           >
                             <DiffStatLabel
                               additions={file.additions ?? 0}
@@ -915,7 +924,9 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                               {(file.additions ?? 0) + (file.deletions ?? 0) > 0 && (
                                 <span
                                   className="font-system-ui ml-auto shrink-0 tabular-nums"
-                                  style={{ fontSize: `${appTypographyScale.chatMetaPx}px` }}
+                                  style={{
+                                    fontSize: `${appTypographyScale.chatMetaPx}px`,
+                                  }}
                                 >
                                   <DiffStatLabel
                                     additions={file.additions ?? 0}
@@ -933,7 +944,9 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                 <div className="mt-0.5 flex items-center gap-2">
                   <p
                     className="font-system-ui tabular-nums text-muted-foreground/45"
-                    style={{ fontSize: `${appTypographyScale.uiTimestampPx}px` }}
+                    style={{
+                      fontSize: `${appTypographyScale.uiTimestampPx}px`,
+                    }}
                   >
                     {assistantMeta}
                   </p>
@@ -1196,7 +1209,9 @@ const UserMessageInlineSkillChip = memo(function UserMessageInlineSkillChip(prop
       <span
         aria-hidden="true"
         className={COMPOSER_INLINE_SKILL_CHIP_ICON_CLASS_NAME}
-        dangerouslySetInnerHTML={{ __html: COMPOSER_INLINE_SKILL_CHIP_ICON_SVG }}
+        dangerouslySetInnerHTML={{
+          __html: COMPOSER_INLINE_SKILL_CHIP_ICON_SVG,
+        }}
       />
       <span className={COMPOSER_INLINE_CHIP_LABEL_CLASS_NAME}>
         {formatComposerSkillChipLabel(props.skillName)}
@@ -2030,7 +2045,9 @@ const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: {
                       {secondaryLabel ? (
                         <div
                           className="truncate pt-0.5 leading-4 text-muted-foreground/56"
-                          style={{ fontSize: `${Math.max(11, rowFontSizePx - 1)}px` }}
+                          style={{
+                            fontSize: `${Math.max(11, rowFontSizePx - 1)}px`,
+                          }}
                           title={secondaryLabel}
                         >
                           {secondaryLabel}
@@ -2039,7 +2056,9 @@ const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: {
                       {subagent.latestUpdate ? (
                         <div
                           className="flex items-baseline gap-1.5 pt-1 text-muted-foreground/42"
-                          style={{ fontSize: `${Math.max(10, rowFontSizePx - 2)}px` }}
+                          style={{
+                            fontSize: `${Math.max(10, rowFontSizePx - 2)}px`,
+                          }}
                           title={subagent.latestUpdate}
                         >
                           <span className="shrink-0 uppercase tracking-[0.14em] text-muted-foreground/30">
