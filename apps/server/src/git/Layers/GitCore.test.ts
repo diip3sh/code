@@ -1631,6 +1631,95 @@ it.layer(TestLayer)("git integration", (it) => {
       }),
     );
 
+    it.effect("stages all unstaged tracked, deleted, and untracked files", () =>
+      Effect.gen(function* () {
+        const tmp = yield* makeTmpDir();
+        yield* initRepoWithCommit(tmp);
+        const core = yield* GitCore;
+
+        yield* (yield* FileSystem.FileSystem).remove(path.join(tmp, "README.md"));
+        yield* writeTextFile(path.join(tmp, "untracked.txt"), "untracked\n");
+
+        yield* core.updateIndex({ cwd: tmp, action: "stage" });
+
+        const staged = yield* git(tmp, ["diff", "--cached", "--name-status"]);
+        expect(staged).toContain("D\tREADME.md");
+        expect(staged).toContain("A\tuntracked.txt");
+        expect(yield* git(tmp, ["diff", "--name-status"])).toBe("");
+      }),
+    );
+
+    it.effect("stages one file without staging unrelated files", () =>
+      Effect.gen(function* () {
+        const tmp = yield* makeTmpDir();
+        yield* initRepoWithCommit(tmp);
+        const core = yield* GitCore;
+
+        yield* writeTextFile(path.join(tmp, "a.txt"), "file a\n");
+        yield* writeTextFile(path.join(tmp, "b.txt"), "file b\n");
+
+        yield* core.updateIndex({ cwd: tmp, action: "stage", filePaths: ["a.txt"] });
+
+        const staged = yield* git(tmp, ["diff", "--cached", "--name-status"]);
+        expect(staged).toContain("A\ta.txt");
+        expect(staged).not.toContain("b.txt");
+        expect(yield* git(tmp, ["status", "--porcelain", "--", "b.txt"])).toContain("?? b.txt");
+      }),
+    );
+
+    it.effect("unstages all staged files", () =>
+      Effect.gen(function* () {
+        const tmp = yield* makeTmpDir();
+        yield* initRepoWithCommit(tmp);
+        const core = yield* GitCore;
+
+        yield* writeTextFile(path.join(tmp, "a.txt"), "file a\n");
+        yield* writeTextFile(path.join(tmp, "b.txt"), "file b\n");
+        yield* git(tmp, ["add", "-A"]);
+
+        yield* core.updateIndex({ cwd: tmp, action: "unstage" });
+
+        expect(yield* git(tmp, ["diff", "--cached", "--name-status"])).toBe("");
+        expect(yield* git(tmp, ["status", "--porcelain"])).toContain("?? a.txt");
+        expect(yield* git(tmp, ["status", "--porcelain"])).toContain("?? b.txt");
+      }),
+    );
+
+    it.effect("unstages one file without unstaging unrelated files", () =>
+      Effect.gen(function* () {
+        const tmp = yield* makeTmpDir();
+        yield* initRepoWithCommit(tmp);
+        const core = yield* GitCore;
+
+        yield* writeTextFile(path.join(tmp, "a.txt"), "file a\n");
+        yield* writeTextFile(path.join(tmp, "b.txt"), "file b\n");
+        yield* git(tmp, ["add", "-A"]);
+
+        yield* core.updateIndex({ cwd: tmp, action: "unstage", filePaths: ["a.txt"] });
+
+        const staged = yield* git(tmp, ["diff", "--cached", "--name-status"]);
+        expect(staged).toContain("A\tb.txt");
+        expect(staged).not.toContain("a.txt");
+        expect(yield* git(tmp, ["status", "--porcelain", "--", "a.txt"])).toContain("?? a.txt");
+      }),
+    );
+
+    it.effect("unstages files in an unborn repository", () =>
+      Effect.gen(function* () {
+        const tmp = yield* makeTmpDir();
+        yield* initRepoWithoutCommit(tmp);
+        const core = yield* GitCore;
+
+        yield* writeTextFile(path.join(tmp, "draft.txt"), "draft\n");
+        yield* git(tmp, ["add", "draft.txt"]);
+
+        yield* core.updateIndex({ cwd: tmp, action: "unstage" });
+
+        expect(yield* git(tmp, ["diff", "--cached", "--name-status"])).toBe("");
+        expect(yield* git(tmp, ["status", "--porcelain"])).toContain("?? draft.txt");
+      }),
+    );
+
     it.effect("computes ahead count against base branch when no upstream is configured", () =>
       Effect.gen(function* () {
         const tmp = yield* makeTmpDir();

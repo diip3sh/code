@@ -44,6 +44,7 @@ import type {
   GitStatusResult,
   GitSummarizeDiffInput,
   GitSummarizeDiffResult,
+  GitUpdateIndexInput,
 } from "./git";
 import type {
   ProjectListDirectoriesInput,
@@ -370,6 +371,7 @@ export interface NativeApi {
     readWorkingTreeDiff: (
       input: GitReadWorkingTreeDiffInput,
     ) => Promise<GitReadWorkingTreeDiffResult>;
+    updateIndex: (input: GitUpdateIndexInput) => Promise<void>;
     summarizeDiff: (input: GitSummarizeDiffInput) => Promise<GitSummarizeDiffResult>;
     runStackedAction: (input: GitRunStackedActionInput) => Promise<GitRunStackedActionResult>;
     onActionProgress: (callback: (event: GitActionProgressEvent) => void) => () => void;

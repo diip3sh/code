@@ -91,6 +91,15 @@ export const GitReadWorkingTreeDiffInput = Schema.Struct({
 });
 export type GitReadWorkingTreeDiffInput = typeof GitReadWorkingTreeDiffInput.Type;
 
+export const GitUpdateIndexInput = Schema.Struct({
+  cwd: TrimmedNonEmptyStringSchema,
+  action: Schema.Literals(["stage", "unstage"]),
+  filePaths: Schema.optional(
+    Schema.Array(TrimmedNonEmptyStringSchema).check(Schema.isMinLength(1)),
+  ),
+});
+export type GitUpdateIndexInput = typeof GitUpdateIndexInput.Type;
+
 export const GitPullInput = Schema.Struct({
   cwd: TrimmedNonEmptyStringSchema,
 });

@@ -27,6 +27,7 @@ import type {
   GitStashInfoResult,
   GitStatusInput,
   GitStatusResult,
+  GitUpdateIndexInput,
 } from "@t3tools/contracts";
 
 import type { GitCheckoutDirtyWorktreeError, GitCommandError } from "../Errors.ts";
@@ -179,6 +180,11 @@ export interface GitCoreShape {
    * Read only staged changes.
    */
   readonly readStagedPatch: (cwd: string) => Effect.Effect<GitWorkingTreePatch, GitCommandError>;
+
+  /**
+   * Stage or unstage all changes, or a specific set of paths.
+   */
+  readonly updateIndex: (input: GitUpdateIndexInput) => Effect.Effect<void, GitCommandError>;
 
   /**
    * Read committed branch changes against the upstream/base branch.

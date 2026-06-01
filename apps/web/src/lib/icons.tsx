@@ -58,6 +58,7 @@ import {
   IconDeviceLaptop,
   IconMessageCircle,
   IconMicrophone,
+  IconMinus,
   IconMoon,
   IconPalette,
   IconPaperclip,
@@ -198,6 +199,7 @@ export const Maximize2 = adaptIcon(IconMaximize);
 export const Minimize2 = adaptIcon(IconMinimize);
 export const MessageCircleIcon = adaptIcon(IconMessageCircle);
 export const MicIcon = adaptIcon(IconMicrophone);
+export const MinusIcon = adaptIcon(IconMinus);
 export const PanelLeftCloseIcon = adaptIcon(IconLayoutSidebarLeftCollapse);
 export const PanelLeftIcon = adaptIcon(IconLayoutSidebarLeftExpand);
 export const PanelRightCloseIcon = adaptIcon(IconLayoutSidebarRightCollapse);

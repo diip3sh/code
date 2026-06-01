@@ -41,6 +41,7 @@ import {
   GitStashInfoInput,
   GitStatusInput,
   GitSummarizeDiffInput,
+  GitUpdateIndexInput,
 } from "./git";
 import {
   TerminalClearInput,
@@ -103,6 +104,7 @@ export const WS_METHODS = {
   gitPull: "git.pull",
   gitStatus: "git.status",
   gitReadWorkingTreeDiff: "git.readWorkingTreeDiff",
+  gitUpdateIndex: "git.updateIndex",
   gitSummarizeDiff: "git.summarizeDiff",
   gitRunStackedAction: "git.runStackedAction",
   gitListBranches: "git.listBranches",
@@ -219,6 +221,7 @@ const WebSocketRequestBody = Schema.Union([
   tagRequestBody(WS_METHODS.gitPull, GitPullInput),
   tagRequestBody(WS_METHODS.gitStatus, GitStatusInput),
   tagRequestBody(WS_METHODS.gitReadWorkingTreeDiff, GitReadWorkingTreeDiffInput),
+  tagRequestBody(WS_METHODS.gitUpdateIndex, GitUpdateIndexInput),
   tagRequestBody(WS_METHODS.gitSummarizeDiff, GitSummarizeDiffInput),
   tagRequestBody(WS_METHODS.gitRunStackedAction, GitRunStackedActionInput),
   tagRequestBody(WS_METHODS.gitListBranches, GitListBranchesInput),

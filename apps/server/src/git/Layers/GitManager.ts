@@ -1498,6 +1498,10 @@ export const makeGitManager = Effect.gen(function* () {
     },
   );
 
+  const updateIndex: GitManagerShape["updateIndex"] = Effect.fnUntraced(function* (input) {
+    yield* gitCore.updateIndex(input);
+  });
+
   // Keep diff summaries read-only by summarizing the patch already selected in the UI.
   const summarizeDiff: GitManagerShape["summarizeDiff"] = Effect.fnUntraced(function* (input) {
     const patch = input.patch.trim();
@@ -2784,6 +2788,7 @@ The local stash entry was kept for recovery.`,
   return {
     status,
     readWorkingTreeDiff,
+    updateIndex,
     summarizeDiff,
     resolvePullRequest,
     preparePullRequestThread,

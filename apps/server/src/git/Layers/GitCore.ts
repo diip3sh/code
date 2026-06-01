@@ -1543,6 +1543,36 @@ export const makeGitCore = (options?: { executeOverride?: GitCoreShape["execute"
         },
       ).pipe(Effect.map((result) => ({ patch: result.stdout })));
 
+    const updateIndex: GitCoreShape["updateIndex"] = (input) =>
+      Effect.gen(function* () {
+        const paths = input.filePaths?.filter((filePath) => filePath.trim().length > 0) ?? [];
+        const pathArgs = paths.length > 0 ? ["--", ...paths] : [];
+        if (input.action === "stage") {
+          yield* runGit("GitCore.updateIndex.stage", input.cwd, ["add", "-A", ...pathArgs]);
+          return;
+        }
+
+        const resetArgs = paths.length > 0 ? ["reset", "--", ...paths] : ["reset"];
+        const resetResult = yield* executeGit(
+          "GitCore.updateIndex.unstage.reset",
+          input.cwd,
+          resetArgs,
+          {
+            allowNonZeroExit: true,
+            timeoutMs: 30_000,
+          },
+        );
+        if (resetResult.code === 0) {
+          return;
+        }
+
+        const rmArgs =
+          paths.length > 0
+            ? ["rm", "--cached", "-r", "--ignore-unmatch", "--", ...paths]
+            : ["rm", "--cached", "-r", "--ignore-unmatch", "--", "."];
+        yield* runGit("GitCore.updateIndex.unstage.unbornFallback", input.cwd, rmArgs);
+      });
+
     const readWorkingTreePatch: GitCoreShape["readWorkingTreePatch"] = (cwd) =>
       Effect.gen(function* () {
         const headExists = yield* executeGit(
@@ -2563,6 +2593,7 @@ export const makeGitCore = (options?: { executeOverride?: GitCoreShape["execute"
       readWorkingTreePatch,
       readUnstagedPatch,
       readStagedPatch,
+      updateIndex,
       readBranchPatch,
       prepareCommitContext,
       commit,

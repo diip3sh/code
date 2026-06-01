@@ -22,6 +22,7 @@ import {
   GitStatusResult,
   GitSummarizeDiffInput,
   GitSummarizeDiffResult,
+  GitUpdateIndexInput,
 } from "@t3tools/contracts";
 import { ServiceMap } from "effect";
 import type { Effect } from "effect";
@@ -53,6 +54,11 @@ export interface GitManagerShape {
   readonly readWorkingTreeDiff: (
     input: GitReadWorkingTreeDiffInput,
   ) => Effect.Effect<GitReadWorkingTreeDiffResult, GitManagerServiceError>;
+
+  /**
+   * Stage or unstage repository index entries.
+   */
+  readonly updateIndex: (input: GitUpdateIndexInput) => Effect.Effect<void, GitManagerServiceError>;
 
   /**
    * Generate a read-only markdown summary for an existing diff patch.

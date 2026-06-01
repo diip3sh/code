@@ -1,5 +1,9 @@
-import { FileDiff, type FileDiffMetadata, Virtualizer } from "@pierre/diffs/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  FileDiff,
+  type FileDiffMetadata,
+  Virtualizer,
+} from "@pierre/diffs/react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { ThreadId, type TurnId } from "@t3tools/contracts";
 import { FaPlusMinus } from "react-icons/fa6";
@@ -13,6 +17,9 @@ import {
   CopyIcon,
   DiffIcon,
   AdjustmentsIcon,
+  Loader2Icon,
+  MinusIcon,
+  PlusIcon,
   Rows3Icon,
   TextWrapIcon,
   XIcon,
@@ -31,11 +38,15 @@ import {
   gitQueryKeys,
   gitStatusQueryOptions,
   gitSummarizeDiffQueryOptions,
+  gitUpdateIndexMutationOptions,
   gitWorkingTreeDiffQueryOptions,
 } from "~/lib/gitReactQuery";
 import { checkpointDiffQueryOptions } from "~/lib/providerReactQuery";
 import { cn } from "~/lib/utils";
-import { parseDiffRouteSearch, stripDiffSearchParams } from "../diffRouteSearch";
+import {
+  parseDiffRouteSearch,
+  stripDiffSearchParams,
+} from "../diffRouteSearch";
 import { useTheme } from "../hooks/useTheme";
 import {
   buildPatchCacheKey,
@@ -59,7 +70,11 @@ import { useComposerDraftStore } from "../composerDraftStore";
 import { formatShortTimestamp } from "../timestampFormat";
 import ChatMarkdown from "./ChatMarkdown";
 import { resolveDiffPanelThread } from "./DiffPanel.logic";
-import { DiffPanelLoadingState, DiffPanelShell, type DiffPanelMode } from "./DiffPanelShell";
+import {
+  DiffPanelLoadingState,
+  DiffPanelShell,
+  type DiffPanelMode,
+} from "./DiffPanelShell";
 import { Button } from "./ui/button";
 import {
   Menu,
@@ -183,12 +198,38 @@ function buildFileDiffRenderKey(fileDiff: FileDiffMetadata): string {
   return fileDiff.cacheKey ?? `${fileDiff.prevName ?? "none"}:${fileDiff.name}`;
 }
 
+function normalizeDiffActionPath(
+  pathValue: string | null | undefined,
+): string | null {
+  if (!pathValue || pathValue === "/dev/null") {
+    return null;
+  }
+  if (pathValue.startsWith("a/") || pathValue.startsWith("b/")) {
+    return pathValue.slice(2);
+  }
+  return pathValue;
+}
+
+function resolveFileDiffActionPaths(fileDiff: FileDiffMetadata): string[] {
+  return [
+    normalizeDiffActionPath(fileDiff.prevName),
+    normalizeDiffActionPath(fileDiff.name),
+  ].filter((pathValue, index, paths): pathValue is string => {
+    return pathValue !== null && paths.indexOf(pathValue) === index;
+  });
+}
+
 interface DiffPanelProps {
   mode?: DiffPanelMode;
   threadId?: ThreadId | null;
-  panelState?: Pick<SplitViewPanePanelState, "panel" | "diffTurnId" | "diffFilePath">;
+  panelState?: Pick<
+    SplitViewPanePanelState,
+    "panel" | "diffTurnId" | "diffFilePath"
+  >;
   onUpdatePanelState?: (
-    patch: Partial<Pick<SplitViewPanePanelState, "panel" | "diffTurnId" | "diffFilePath">>,
+    patch: Partial<
+      Pick<SplitViewPanePanelState, "panel" | "diffTurnId" | "diffFilePath">
+    >,
   ) => void;
   onClosePanel?: () => void;
   liveRefreshEnabled?: boolean;
@@ -208,14 +249,20 @@ export default function DiffPanel({
   const queryClient = useQueryClient();
   const { resolvedTheme } = useTheme();
   const { settings } = useAppSettings();
-  const providerOptions = useMemo(() => getProviderStartOptions(settings), [settings]);
-  const [diffRenderMode, setDiffRenderMode] = useState<DiffRenderMode>("stacked");
+  const providerOptions = useMemo(
+    () => getProviderStartOptions(settings),
+    [settings],
+  );
+  const [diffRenderMode, setDiffRenderMode] =
+    useState<DiffRenderMode>("stacked");
   const [diffWordWrap, setDiffWordWrap] = useState(settings.diffWordWrap);
   const [diffIgnoreWhitespace, setDiffIgnoreWhitespace] = useState(true);
   const [surfaceMode, setSurfaceMode] = useState<DiffSurfaceMode>("review");
   const repoDiffScope = useRepoDiffScopeStore((store) => store.scope);
   const setRepoDiffScope = useRepoDiffScopeStore((store) => store.setScope);
-  const [collapsedFiles, setCollapsedFiles] = useState<Set<string>>(() => new Set());
+  const [collapsedFiles, setCollapsedFiles] = useState<Set<string>>(
+    () => new Set(),
+  );
   const patchViewportRef = useRef<HTMLDivElement>(null);
   const turnStripRef = useRef<HTMLDivElement>(null);
   const previousDiffOpenRef = useRef(false);
@@ -223,23 +270,31 @@ export default function DiffPanel({
   const [canScrollTurnStripRight, setCanScrollTurnStripRight] = useState(false);
   const routeThreadId = useParams({
     strict: false,
-    select: (params) => (params.threadId ? ThreadId.makeUnsafe(params.threadId) : null),
+    select: (params) =>
+      params.threadId ? ThreadId.makeUnsafe(params.threadId) : null,
   });
   const diffSearch = useSearch({
     strict: false,
     select: (search) => parseDiffRouteSearch(search),
   });
-  const diffOpen = panelState ? panelState.panel === "diff" : diffSearch.diff === "1";
+  const diffOpen = panelState
+    ? panelState.panel === "diff"
+    : diffSearch.diff === "1";
   const activeThreadId = controlledThreadId ?? routeThreadId;
   const serverThread = useStore(
     useMemo(() => createThreadSelector(activeThreadId), [activeThreadId]),
   );
   const draftThread = useComposerDraftStore((store) =>
-    activeThreadId ? (store.draftThreadsByThreadId[activeThreadId] ?? null) : null,
+    activeThreadId
+      ? (store.draftThreadsByThreadId[activeThreadId] ?? null)
+      : null,
   );
   const fallbackDraftProjectId = draftThread?.projectId ?? null;
   const fallbackDraftProject = useStore(
-    useMemo(() => createProjectSelector(fallbackDraftProjectId), [fallbackDraftProjectId]),
+    useMemo(
+      () => createProjectSelector(fallbackDraftProjectId),
+      [fallbackDraftProjectId],
+    ),
   );
   // Keep diff summary access available for draft chats before the first turn promotes them into the server store.
   const activeThread = useMemo(
@@ -248,18 +303,28 @@ export default function DiffPanel({
         threadId: activeThreadId,
         serverThread,
         draftThread,
-        fallbackModelSelection: fallbackDraftProject?.defaultModelSelection ?? null,
+        fallbackModelSelection:
+          fallbackDraftProject?.defaultModelSelection ?? null,
       }),
-    [activeThreadId, draftThread, fallbackDraftProject?.defaultModelSelection, serverThread],
+    [
+      activeThreadId,
+      draftThread,
+      fallbackDraftProject?.defaultModelSelection,
+      serverThread,
+    ],
   );
-  const activeProjectId = activeThread?.projectId ?? draftThread?.projectId ?? null;
+  const activeProjectId =
+    activeThread?.projectId ?? draftThread?.projectId ?? null;
   const activeProject = useStore(
     useMemo(() => createProjectSelector(activeProjectId), [activeProjectId]),
   );
   const resolvedThreadEnvMode =
     serverThread?.envMode ?? draftThread?.envMode ?? activeThread?.envMode;
   const resolvedThreadWorktreePath =
-    serverThread?.worktreePath ?? draftThread?.worktreePath ?? activeThread?.worktreePath ?? null;
+    serverThread?.worktreePath ??
+    draftThread?.worktreePath ??
+    activeThread?.worktreePath ??
+    null;
   const diffEnvironmentState = resolveDiffEnvironmentState({
     projectCwd: activeProject?.cwd ?? null,
     envMode: resolvedThreadEnvMode,
@@ -269,6 +334,9 @@ export default function DiffPanel({
   const activeCwd = diffEnvironmentState.cwd;
   const gitBranchesQuery = useQuery(gitBranchesQueryOptions(activeCwd ?? null));
   const gitStatusQuery = useQuery(gitStatusQueryOptions(activeCwd ?? null));
+  const updateIndexMutation = useMutation(
+    gitUpdateIndexMutationOptions({ cwd: activeCwd ?? null, queryClient }),
+  );
   const isGitRepo = gitBranchesQuery.data?.isRepo ?? true;
   const { turnDiffSummaries, inferredCheckpointTurnCountByTurnId } =
     useTurnDiffSummaries(activeThread);
@@ -281,7 +349,10 @@ export default function DiffPanel({
       activities: activeThread.activities,
       session: activeThread.session,
     });
-    return !isLatestTurnSettled(activeThread.latestTurn, activeThread.session) || hasLiveTail
+    return !isLatestTurnSettled(
+      activeThread.latestTurn,
+      activeThread.session,
+    ) || hasLiveTail
       ? GIT_WORKING_TREE_DIFF_LIVE_REFETCH_INTERVAL_MS
       : false;
   }, [activeThread, liveRefreshEnabled]);
@@ -289,9 +360,13 @@ export default function DiffPanel({
     () =>
       [...turnDiffSummaries].toSorted((left, right) => {
         const leftTurnCount =
-          left.checkpointTurnCount ?? inferredCheckpointTurnCountByTurnId[left.turnId] ?? 0;
+          left.checkpointTurnCount ??
+          inferredCheckpointTurnCountByTurnId[left.turnId] ??
+          0;
         const rightTurnCount =
-          right.checkpointTurnCount ?? inferredCheckpointTurnCountByTurnId[right.turnId] ?? 0;
+          right.checkpointTurnCount ??
+          inferredCheckpointTurnCountByTurnId[right.turnId] ??
+          0;
         if (leftTurnCount !== rightTurnCount) {
           return rightTurnCount - leftTurnCount;
         }
@@ -312,11 +387,13 @@ export default function DiffPanel({
   const selectedTurn =
     selectedTurnId === null
       ? undefined
-      : (orderedTurnDiffSummaries.find((summary) => summary.turnId === selectedTurnId) ??
-        orderedTurnDiffSummaries[0]);
+      : (orderedTurnDiffSummaries.find(
+          (summary) => summary.turnId === selectedTurnId,
+        ) ?? orderedTurnDiffSummaries[0]);
   const selectedCheckpointTurnCount =
     selectedTurn &&
-    (selectedTurn.checkpointTurnCount ?? inferredCheckpointTurnCountByTurnId[selectedTurn.turnId]);
+    (selectedTurn.checkpointTurnCount ??
+      inferredCheckpointTurnCountByTurnId[selectedTurn.turnId]);
   const selectedCheckpointRange = useMemo(
     () =>
       typeof selectedCheckpointTurnCount === "number"
@@ -331,7 +408,8 @@ export default function DiffPanel({
     const turnCounts = orderedTurnDiffSummaries
       .map(
         (summary) =>
-          summary.checkpointTurnCount ?? inferredCheckpointTurnCountByTurnId[summary.turnId],
+          summary.checkpointTurnCount ??
+          inferredCheckpointTurnCountByTurnId[summary.turnId],
       )
       .filter((value): value is number => typeof value === "number");
     if (turnCounts.length === 0) {
@@ -365,7 +443,9 @@ export default function DiffPanel({
       fromTurnCount: activeCheckpointRange?.fromTurnCount ?? null,
       toTurnCount: activeCheckpointRange?.toTurnCount ?? null,
       ignoreWhitespace: diffIgnoreWhitespace,
-      cacheScope: selectedTurn ? `turn:${selectedTurn.turnId}` : conversationCacheScope,
+      cacheScope: selectedTurn
+        ? `turn:${selectedTurn.turnId}`
+        : conversationCacheScope,
       enabled: isGitRepo && !diffEnvironmentPending,
     }),
   );
@@ -383,10 +463,14 @@ export default function DiffPanel({
         ? "Failed to load checkpoint diff."
         : null;
 
-  const selectedPatch = selectedTurn ? selectedTurnCheckpointDiff : conversationCheckpointDiff;
+  const selectedPatch = selectedTurn
+    ? selectedTurnCheckpointDiff
+    : conversationCheckpointDiff;
   const hasResolvedPatch = typeof selectedPatch === "string";
   const hasNoNetChanges = hasResolvedPatch && selectedPatch.trim().length === 0;
-  const normalizedSelectedPatch = hasResolvedPatch ? selectedPatch.trim() : null;
+  const normalizedSelectedPatch = hasResolvedPatch
+    ? selectedPatch.trim()
+    : null;
   const repoDiffQuery = useQuery(
     gitWorkingTreeDiffQueryOptions({
       cwd: activeCwd ?? null,
@@ -397,7 +481,8 @@ export default function DiffPanel({
   );
   const repoPatch = repoDiffQuery.data?.patch;
   const hasResolvedRepoPatch = typeof repoPatch === "string";
-  const hasNoRepoChanges = hasResolvedRepoPatch && repoPatch.trim().length === 0;
+  const hasNoRepoChanges =
+    hasResolvedRepoPatch && repoPatch.trim().length === 0;
   const normalizedRepoPatch = hasResolvedRepoPatch ? repoPatch.trim() : null;
   const repoDiffError =
     repoDiffQuery.error instanceof Error
@@ -440,14 +525,20 @@ export default function DiffPanel({
   ]);
 
   const activeReviewPatch = surfaceMode === "total" ? repoPatch : selectedPatch;
-  const activeReviewError = surfaceMode === "total" ? repoDiffError : checkpointDiffError;
+  const activeReviewError =
+    surfaceMode === "total" ? repoDiffError : checkpointDiffError;
   const activeReviewIsLoading =
     surfaceMode === "total" ? repoDiffQuery.isLoading : isLoadingCheckpointDiff;
-  const activeReviewHasNoChanges = surfaceMode === "total" ? hasNoRepoChanges : hasNoNetChanges;
+  const activeReviewHasNoChanges =
+    surfaceMode === "total" ? hasNoRepoChanges : hasNoNetChanges;
   const isSidebarMode = mode === "sidebar";
   const { copyToClipboard, isCopied: isSummaryCopied } = useCopyToClipboard();
-  const { copyToClipboard: copyDiffToClipboard, isCopied: isDiffCopied } = useCopyToClipboard();
-  const diffCopyText = useMemo(() => resolveDiffCopyText(activeReviewPatch), [activeReviewPatch]);
+  const { copyToClipboard: copyDiffToClipboard, isCopied: isDiffCopied } =
+    useCopyToClipboard();
+  const diffCopyText = useMemo(
+    () => resolveDiffCopyText(activeReviewPatch),
+    [activeReviewPatch],
+  );
   const renderablePatch = useMemo(
     () => getRenderablePatch(activeReviewPatch, `diff-panel:${resolvedTheme}`),
     [activeReviewPatch, resolvedTheme],
@@ -457,13 +548,42 @@ export default function DiffPanel({
       return [];
     }
     return renderablePatch.files.toSorted((left, right) =>
-      resolveFileDiffPath(left).localeCompare(resolveFileDiffPath(right), undefined, {
-        numeric: true,
-        sensitivity: "base",
-      }),
+      resolveFileDiffPath(left).localeCompare(
+        resolveFileDiffPath(right),
+        undefined,
+        {
+          numeric: true,
+          sensitivity: "base",
+        },
+      ),
     );
   }, [renderablePatch]);
-  const totalPatchStat = useMemo(() => summarizePatchStats(repoPatch), [repoPatch]);
+  const totalPatchStat = useMemo(
+    () => summarizePatchStats(repoPatch),
+    [repoPatch],
+  );
+  const indexAction =
+    surfaceMode === "total"
+      ? repoDiffScope === "unstaged"
+        ? "stage"
+        : repoDiffScope === "staged"
+          ? "unstage"
+          : null
+      : null;
+  const showIndexActions = indexAction !== null;
+  const indexActionLabel = indexAction === "stage" ? "Stage" : "Unstage";
+  const handleUpdateIndex = useCallback(
+    (filePaths?: string[]) => {
+      if (!indexAction || updateIndexMutation.isPending) {
+        return;
+      }
+      updateIndexMutation.mutate({
+        action: indexAction,
+        ...(filePaths && filePaths.length > 0 ? { filePaths } : {}),
+      });
+    },
+    [indexAction, updateIndexMutation],
+  );
 
   useEffect(() => {
     if (diffOpen && !previousDiffOpenRef.current) {
@@ -551,10 +671,16 @@ export default function DiffPanel({
         ? "Failed to generate diff summary."
         : null;
   const canShowSummary = Boolean(
-    !diffEnvironmentPending && activeCwd && (!hasResolvedRepoPatch || !hasNoRepoChanges),
+    !diffEnvironmentPending &&
+    activeCwd &&
+    (!hasResolvedRepoPatch || !hasNoRepoChanges),
   );
   const canPrefetchSummary = Boolean(
-    diffOpen && !diffEnvironmentPending && activeCwd && normalizedRepoPatch && !hasNoRepoChanges,
+    diffOpen &&
+    !diffEnvironmentPending &&
+    activeCwd &&
+    normalizedRepoPatch &&
+    !hasNoRepoChanges,
   );
   const canShowTotal = Boolean(!diffEnvironmentPending && activeCwd);
 
@@ -563,7 +689,9 @@ export default function DiffPanel({
       return;
     }
 
-    const cachedSummaryState = queryClient.getQueryState(diffSummaryPrefetchOptions.queryKey);
+    const cachedSummaryState = queryClient.getQueryState(
+      diffSummaryPrefetchOptions.queryKey,
+    );
     if (
       cachedSummaryState?.status === "success" ||
       cachedSummaryState?.fetchStatus === "fetching"
@@ -572,8 +700,13 @@ export default function DiffPanel({
     }
 
     const timerId = window.setTimeout(() => {
-      const nextSummaryState = queryClient.getQueryState(diffSummaryPrefetchOptions.queryKey);
-      if (nextSummaryState?.status === "success" || nextSummaryState?.fetchStatus === "fetching") {
+      const nextSummaryState = queryClient.getQueryState(
+        diffSummaryPrefetchOptions.queryKey,
+      );
+      if (
+        nextSummaryState?.status === "success" ||
+        nextSummaryState?.fetchStatus === "fetching"
+      ) {
         return;
       }
       void queryClient.prefetchQuery(diffSummaryPrefetchOptions);
@@ -589,7 +722,9 @@ export default function DiffPanel({
       return;
     }
     const target = Array.from(
-      patchViewportRef.current.querySelectorAll<HTMLElement>("[data-diff-file-path]"),
+      patchViewportRef.current.querySelectorAll<HTMLElement>(
+        "[data-diff-file-path]",
+      ),
     ).find((element) => element.dataset.diffFilePath === selectedFilePath);
     target?.scrollIntoView({ block: "nearest" });
   }, [selectedFilePath, renderableFiles]);
@@ -649,7 +784,10 @@ export default function DiffPanel({
       return;
     }
 
-    const maxScrollLeft = Math.max(0, element.scrollWidth - element.clientWidth);
+    const maxScrollLeft = Math.max(
+      0,
+      element.scrollWidth - element.clientWidth,
+    );
     setCanScrollTurnStripLeft(element.scrollLeft > 4);
     setCanScrollTurnStripRight(element.scrollLeft < maxScrollLeft - 4);
   }, []);
@@ -658,26 +796,33 @@ export default function DiffPanel({
     if (!element) return;
     element.scrollBy({ left: offset, behavior: "smooth" });
   }, []);
-  const onTurnStripWheel = useCallback((event: ReactWheelEvent<HTMLDivElement>) => {
-    const element = turnStripRef.current;
-    if (!element) return;
-    if (element.scrollWidth <= element.clientWidth + 1) return;
-    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+  const onTurnStripWheel = useCallback(
+    (event: ReactWheelEvent<HTMLDivElement>) => {
+      const element = turnStripRef.current;
+      if (!element) return;
+      if (element.scrollWidth <= element.clientWidth + 1) return;
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
 
-    event.preventDefault();
-    element.scrollBy({ left: event.deltaY, behavior: "auto" });
-  }, []);
+      event.preventDefault();
+      element.scrollBy({ left: event.deltaY, behavior: "auto" });
+    },
+    [],
+  );
 
   useEffect(() => {
     const element = turnStripRef.current;
     if (!element) return;
 
-    const frameId = window.requestAnimationFrame(() => updateTurnStripScrollState());
+    const frameId = window.requestAnimationFrame(() =>
+      updateTurnStripScrollState(),
+    );
     const onScroll = () => updateTurnStripScrollState();
 
     element.addEventListener("scroll", onScroll, { passive: true });
 
-    const resizeObserver = new ResizeObserver(() => updateTurnStripScrollState());
+    const resizeObserver = new ResizeObserver(() =>
+      updateTurnStripScrollState(),
+    );
     resizeObserver.observe(element);
 
     return () => {
@@ -688,7 +833,9 @@ export default function DiffPanel({
   }, [updateTurnStripScrollState]);
 
   useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => updateTurnStripScrollState());
+    const frameId = window.requestAnimationFrame(() =>
+      updateTurnStripScrollState(),
+    );
     return () => {
       window.cancelAnimationFrame(frameId);
     };
@@ -698,7 +845,9 @@ export default function DiffPanel({
     const element = turnStripRef.current;
     if (!element) return;
 
-    const selectedChip = element.querySelector<HTMLElement>("[data-turn-chip-selected='true']");
+    const selectedChip = element.querySelector<HTMLElement>(
+      "[data-turn-chip-selected='true']",
+    );
     selectedChip?.scrollIntoView({
       block: "nearest",
       inline: "nearest",
@@ -762,7 +911,9 @@ export default function DiffPanel({
                   : "border-[color:var(--color-border-light)] bg-transparent text-[var(--color-text-foreground-secondary)] hover:border-[color:var(--color-border)] hover:bg-[var(--sidebar-accent)] hover:text-[var(--color-text-foreground)]",
               )}
             >
-              <div className="text-[10px] leading-tight font-medium">All turns</div>
+              <div className="text-[10px] leading-tight font-medium">
+                All turns
+              </div>
             </div>
           </button>
           {orderedTurnDiffSummaries.map((summary) => (
@@ -790,7 +941,10 @@ export default function DiffPanel({
                       "?"}
                   </span>
                   <span className="text-[9px] leading-tight opacity-70">
-                    {formatShortTimestamp(summary.completedAt, settings.timestampFormat)}
+                    {formatShortTimestamp(
+                      summary.completedAt,
+                      settings.timestampFormat,
+                    )}
                   </span>
                 </div>
               </div>
@@ -821,8 +975,14 @@ export default function DiffPanel({
               </Toggle>
             </ToggleGroup>
             <Toggle
-              aria-label={diffWordWrap ? "Disable diff line wrapping" : "Enable diff line wrapping"}
-              title={diffWordWrap ? "Disable line wrapping" : "Enable line wrapping"}
+              aria-label={
+                diffWordWrap
+                  ? "Disable diff line wrapping"
+                  : "Enable diff line wrapping"
+              }
+              title={
+                diffWordWrap ? "Disable line wrapping" : "Enable line wrapping"
+              }
               variant="outline"
               size="xs"
               pressed={diffWordWrap}
@@ -859,12 +1019,13 @@ export default function DiffPanel({
         </div>
       ) : !isGitRepo ? (
         <div className="flex flex-1 items-center justify-center px-5 text-center text-xs text-muted-foreground/70">
-          Turn diffs are unavailable because this project is not a git repository.
+          Turn diffs are unavailable because this project is not a git
+          repository.
         </div>
       ) : diffEnvironmentPending ? (
         <div className="flex flex-1 items-center justify-center px-5 text-center text-xs text-muted-foreground/70">
-          This chat environment is still being prepared. Diff and summary will be available once the
-          worktree is ready.
+          This chat environment is still being prepared. Diff and summary will
+          be available once the worktree is ready.
         </div>
       ) : (
         <>
@@ -877,7 +1038,8 @@ export default function DiffPanel({
                   surfaceMode === "summary"
                     ? "border-foreground text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",
-                  !canShowSummary && "cursor-not-allowed opacity-45 hover:text-muted-foreground",
+                  !canShowSummary &&
+                    "cursor-not-allowed opacity-45 hover:text-muted-foreground",
                 )}
                 disabled={!canShowSummary}
                 onClick={() => {
@@ -951,7 +1113,9 @@ export default function DiffPanel({
                     }}
                   >
                     <MenuRadioItem value="branch">Branch</MenuRadioItem>
-                    <MenuRadioItem value="workingTree">Working tree</MenuRadioItem>
+                    <MenuRadioItem value="workingTree">
+                      Working tree
+                    </MenuRadioItem>
                     <MenuRadioItem value="unstaged">Unstaged</MenuRadioItem>
                     <MenuRadioItem value="staged">Staged</MenuRadioItem>
                   </MenuRadioGroup>
@@ -996,7 +1160,9 @@ export default function DiffPanel({
                   onClick={() => {
                     copyDiffToClipboard(diffCopyText, undefined);
                   }}
-                  aria-label={isDiffCopied ? "Copied full diff" : "Copy full diff"}
+                  aria-label={
+                    isDiffCopied ? "Copied full diff" : "Copy full diff"
+                  }
                   title={isDiffCopied ? "Copied full diff" : "Copy full diff"}
                 >
                   {isDiffCopied ? (
@@ -1014,10 +1180,12 @@ export default function DiffPanel({
             <div className="min-h-0 flex-1 overflow-auto px-4 py-4">
               <div className="mb-4 flex items-center justify-between gap-3 border-b border-border/60 pb-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">Repo summary</p>
+                  <p className="text-sm font-medium text-foreground">
+                    Repo summary
+                  </p>
                   <p className="text-[11px] text-muted-foreground">
-                    Generated from the current {REPO_DIFF_SCOPE_LABELS[repoDiffScope].toLowerCase()}{" "}
-                    diff.
+                    Generated from the current{" "}
+                    {REPO_DIFF_SCOPE_LABELS[repoDiffScope].toLowerCase()} diff.
                   </p>
                 </div>
                 {diffSummaryText ? (
@@ -1028,8 +1196,16 @@ export default function DiffPanel({
                     onClick={() => {
                       copyToClipboard(diffSummaryText, undefined);
                     }}
-                    aria-label={isSummaryCopied ? "Copied diff summary" : "Copy diff summary"}
-                    title={isSummaryCopied ? "Copied diff summary" : "Copy diff summary"}
+                    aria-label={
+                      isSummaryCopied
+                        ? "Copied diff summary"
+                        : "Copy diff summary"
+                    }
+                    title={
+                      isSummaryCopied
+                        ? "Copied diff summary"
+                        : "Copy diff summary"
+                    }
                   >
                     {isSummaryCopied ? (
                       <CheckIcon className="size-3 text-success" />
@@ -1074,11 +1250,13 @@ export default function DiffPanel({
           ) : (
             <div
               ref={patchViewportRef}
-              className="diff-panel-viewport min-h-0 min-w-0 flex-1 overflow-hidden"
+              className="diff-panel-viewport relative min-h-0 min-w-0 flex-1 overflow-hidden"
             >
               {activeReviewError && !renderablePatch && (
                 <div className="px-3">
-                  <p className="mb-2 text-[11px] text-red-500/80">{activeReviewError}</p>
+                  <p className="mb-2 text-[11px] text-red-500/80">
+                    {activeReviewError}
+                  </p>
                 </div>
               )}
               {!renderablePatch ? (
@@ -1105,7 +1283,10 @@ export default function DiffPanel({
                 )
               ) : renderablePatch.kind === "files" ? (
                 <Virtualizer
-                  className="diff-render-surface h-full min-h-0 overflow-auto px-2 pb-2"
+                  className={cn(
+                    "diff-render-surface h-full min-h-0 overflow-auto px-2",
+                    showIndexActions ? "pb-24" : "pb-2",
+                  )}
                   config={{
                     overscrollSize: 600,
                     intersectionObserverMargin: 1200,
@@ -1116,14 +1297,21 @@ export default function DiffPanel({
                     const fileKey = buildFileDiffRenderKey(fileDiff);
                     const themedFileKey = `${fileKey}:${resolvedTheme}`;
                     const isCollapsed = collapsedFiles.has(fileKey);
+                    const fileActionPaths =
+                      resolveFileDiffActionPaths(fileDiff);
+                    const canUpdateFileIndex =
+                      showIndexActions &&
+                      fileActionPaths.length > 0 &&
+                      !updateIndexMutation.isPending;
                     return (
                       <div
                         key={themedFileKey}
                         data-diff-file-path={filePath}
-                        className="diff-render-file mb-2 rounded-md first:mt-2 last:mb-0"
+                        className="diff-render-file group mb-2 rounded-md first:mt-2 last:mb-0"
                         onClickCapture={(event) => {
                           const nativeEvent = event.nativeEvent as MouseEvent;
-                          const composedPath = nativeEvent.composedPath?.() ?? [];
+                          const composedPath =
+                            nativeEvent.composedPath?.() ?? [];
                           const clickedHeader = composedPath.some((node) => {
                             if (!(node instanceof Element)) return false;
                             return (
@@ -1139,7 +1327,8 @@ export default function DiffPanel({
                         <FileDiff
                           fileDiff={fileDiff}
                           options={{
-                            diffStyle: diffRenderMode === "split" ? "split" : "unified",
+                            diffStyle:
+                              diffRenderMode === "split" ? "split" : "unified",
                             lineDiffType: "none",
                             overflow: diffWordWrap ? "wrap" : "scroll",
                             theme: resolveDiffThemeName(resolvedTheme),
@@ -1160,16 +1349,40 @@ export default function DiffPanel({
                               style={{
                                 display: "inline-flex",
                                 alignItems: "center",
+                                gap: "4px",
                                 padding: "2px",
                                 color: "inherit",
                               }}
                             >
+                              {showIndexActions ? (
+                                <button
+                                  type="button"
+                                  className="inline-flex size-6 items-center justify-center rounded-md text-[#808080] opacity-0 transition-[background-color,color,opacity] hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleUpdateIndex(fileActionPaths);
+                                  }}
+                                  disabled={!canUpdateFileIndex}
+                                  aria-label={`${indexActionLabel} ${filePath}`}
+                                  title={`${indexActionLabel} ${filePath}`}
+                                >
+                                  {updateIndexMutation.isPending ? (
+                                    <Loader2Icon className="size-3 animate-spin" />
+                                  ) : indexAction === "stage" ? (
+                                    <PlusIcon className="size-3.5" />
+                                  ) : (
+                                    <MinusIcon className="size-3.5 text-muted-foreground" />
+                                  )}
+                                </button>
+                              ) : null}
                               <ChevronDownIcon
                                 style={{
                                   width: "14px",
                                   height: "14px",
                                   transition: "transform 150ms ease",
-                                  transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                                  transform: isCollapsed
+                                    ? "rotate(-90deg)"
+                                    : "rotate(0deg)",
                                   opacity: 0.5,
                                 }}
                               />
@@ -1183,7 +1396,9 @@ export default function DiffPanel({
               ) : (
                 <div className="h-full overflow-auto p-2">
                   <div className="space-y-2">
-                    <p className="text-[11px] text-muted-foreground/75">{renderablePatch.reason}</p>
+                    <p className="text-[11px] text-muted-foreground/75">
+                      {renderablePatch.reason}
+                    </p>
                     <pre
                       className={cn(
                         "max-h-[72vh] rounded-md border border-border/70 bg-background/70 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground/90",
@@ -1197,6 +1412,38 @@ export default function DiffPanel({
                   </div>
                 </div>
               )}
+              {showIndexActions ? (
+                <div className="pointer-events-none absolute inset-x-0 bottom-9 z-20 flex justify-center px-3">
+                  <div className="rounded-lg bg-[color:var(--color-success)]/10 p-px shadow-[0_12px_32px_rgba(0,0,0,0.22)]">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="group pointer-events-auto h-8 select-none gap-2 rounded-lg border-0 bg-muted px-3 font-sans text-sm leading-8 shadow-[0_-1px_0_0px_color-mix(in_srgb,var(--border)_85%,transparent)_inset,0_0_0_1px_color-mix(in_srgb,var(--background)_40%,transparent)_inset,0_0.5px_0_1.5px_color-mix(in_srgb,var(--foreground)_12%,transparent)_inset] transition-colors hover:bg-muted-foreground/90 active:shadow-[-1px_0px_1px_0px_color-mix(in_srgb,var(--border)_85%,transparent)_inset,1px_0px_1px_0px_color-mix(in_srgb,var(--border)_85%,transparent)_inset,0px_0.125rem_1px_0px_color-mix(in_srgb,var(--border)_85%,transparent)_inset] disabled:opacity-55"
+                      disabled={
+                        updateIndexMutation.isPending ||
+                        activeReviewHasNoChanges
+                      }
+                      onClick={() => {
+                        handleUpdateIndex();
+                      }}
+                      aria-label={`${indexActionLabel} all files`}
+                      title={`${indexActionLabel} all files`}
+                    >
+                      {updateIndexMutation.isPending ? (
+                        <Loader2Icon className="size-3 animate-spin" />
+                      ) : indexAction === "stage" ? (
+                        <PlusIcon className="size-3.5" />
+                      ) : (
+                        <MinusIcon className="size-3.5" />
+                      )}
+                      <span className="block group-active:[transform:translate3d(0,1px,0)]">
+                        {indexActionLabel} all
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
         </>

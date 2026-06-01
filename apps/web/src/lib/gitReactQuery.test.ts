@@ -9,6 +9,7 @@ import {
   gitPreparePullRequestThreadMutationOptions,
   gitPullMutationOptions,
   gitRunStackedActionMutationOptions,
+  gitUpdateIndexMutationOptions,
 } from "./gitReactQuery";
 
 describe("gitMutationKeys", () => {
@@ -20,6 +21,12 @@ describe("gitMutationKeys", () => {
 
   it("scopes pull keys by cwd", () => {
     expect(gitMutationKeys.pull("/repo/a")).not.toEqual(gitMutationKeys.pull("/repo/b"));
+  });
+
+  it("scopes index update keys by cwd", () => {
+    expect(gitMutationKeys.updateIndex("/repo/a")).not.toEqual(
+      gitMutationKeys.updateIndex("/repo/b"),
+    );
   });
 
   it("scopes pull request thread preparation keys by cwd", () => {
@@ -40,6 +47,11 @@ describe("git mutation options", () => {
   it("attaches cwd-scoped mutation key for pull", () => {
     const options = gitPullMutationOptions({ cwd: "/repo/a", queryClient });
     expect(options.mutationKey).toEqual(gitMutationKeys.pull("/repo/a"));
+  });
+
+  it("attaches cwd-scoped mutation key for updateIndex", () => {
+    const options = gitUpdateIndexMutationOptions({ cwd: "/repo/a", queryClient });
+    expect(options.mutationKey).toEqual(gitMutationKeys.updateIndex("/repo/a"));
   });
 
   it("attaches cwd-scoped mutation key for preparePullRequestThread", () => {

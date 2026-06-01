@@ -1,6 +1,7 @@
 import type {
   GitReadWorkingTreeDiffInput,
   GitStackedAction,
+  GitUpdateIndexInput,
   ProviderStartOptions,
 } from "@t3tools/contracts";
 import { mutationOptions, queryOptions, type QueryClient } from "@tanstack/react-query";
@@ -44,6 +45,7 @@ export const gitQueryKeys = {
 export const gitMutationKeys = {
   init: (cwd: string | null) => ["git", "mutation", "init", cwd] as const,
   checkout: (cwd: string | null) => ["git", "mutation", "checkout", cwd] as const,
+  updateIndex: (cwd: string | null) => ["git", "mutation", "update-index", cwd] as const,
   runStackedAction: (cwd: string | null) => ["git", "mutation", "run-stacked-action", cwd] as const,
   pull: (cwd: string | null) => ["git", "mutation", "pull", cwd] as const,
   preparePullRequestThread: (cwd: string | null) =>
@@ -267,6 +269,33 @@ export function gitRunStackedActionMutationOptions(input: {
         ...(input.codexHomePath ? { codexHomePath: input.codexHomePath } : {}),
         ...(input.model ? { textGenerationModel: input.model } : {}),
         ...(input.providerOptions ? { providerOptions: input.providerOptions } : {}),
+      });
+    },
+    onSettled: async () => {
+      await invalidateGitQueries(input.queryClient);
+    },
+  });
+}
+
+export function gitUpdateIndexMutationOptions(input: {
+  cwd: string | null;
+  queryClient: QueryClient;
+}) {
+  return mutationOptions({
+    mutationKey: gitMutationKeys.updateIndex(input.cwd),
+    mutationFn: async ({
+      action,
+      filePaths,
+    }: {
+      action: GitUpdateIndexInput["action"];
+      filePaths?: string[];
+    }) => {
+      const api = ensureNativeApi();
+      if (!input.cwd) throw new Error("Git index update is unavailable.");
+      return api.git.updateIndex({
+        cwd: input.cwd,
+        action,
+        ...(filePaths && filePaths.length > 0 ? { filePaths } : {}),
       });
     },
     onSettled: async () => {

@@ -36,6 +36,7 @@ import {
   GitStatusResult,
   GitSummarizeDiffInput,
   GitSummarizeDiffResult,
+  GitUpdateIndexInput,
 } from "./git";
 import { KeybindingRule } from "./keybindings";
 import {
@@ -259,6 +260,12 @@ export const WsGitStatusRpc = Rpc.make(WS_METHODS.gitStatus, {
 export const WsGitReadWorkingTreeDiffRpc = Rpc.make(WS_METHODS.gitReadWorkingTreeDiff, {
   payload: GitReadWorkingTreeDiffInput,
   success: GitReadWorkingTreeDiffResult,
+  error: WsRpcError,
+});
+
+export const WsGitUpdateIndexRpc = Rpc.make(WS_METHODS.gitUpdateIndex, {
+  payload: GitUpdateIndexInput,
+  success: Schema.Void,
   error: WsRpcError,
 });
 
@@ -581,6 +588,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsShellOpenInEditorRpc,
   WsGitStatusRpc,
   WsGitReadWorkingTreeDiffRpc,
+  WsGitUpdateIndexRpc,
   WsGitSummarizeDiffRpc,
   WsGitPullRpc,
   WsGitRunStackedActionRpc,
