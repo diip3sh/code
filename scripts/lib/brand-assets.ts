@@ -1,18 +1,21 @@
 export const BRAND_ASSET_PATHS = {
-  productionMacIconComposer: "assets/prod/black-macos.icon",
-  productionMacIconPng: "assets/prod/black-macos-1024.png",
-  productionMacLegacyIconPng: "assets/prod/black-macos-legacy-1024.png",
-  productionLinuxIconPng: "assets/prod/black-universal-1024.png",
-  productionWindowsIconIco: "assets/prod/t3-black-windows.ico",
-  productionWebFaviconIco: "assets/prod/t3-black-web-favicon.ico",
-  productionWebFavicon16Png: "assets/prod/t3-black-web-favicon-16x16.png",
-  productionWebFavicon32Png: "assets/prod/t3-black-web-favicon-32x32.png",
-  productionWebAppleTouchIconPng: "assets/prod/t3-black-web-apple-touch-180.png",
-  developmentWindowsIconIco: "assets/dev/blueprint-windows.ico",
-  developmentWebFaviconIco: "assets/dev/blueprint-web-favicon.ico",
-  developmentWebFavicon16Png: "assets/dev/blueprint-web-favicon-16x16.png",
-  developmentWebFavicon32Png: "assets/dev/blueprint-web-favicon-32x32.png",
-  developmentWebAppleTouchIconPng: "assets/dev/blueprint-web-apple-touch-180.png",
+  productionMacIconComposer: "assets/prod/black-macos.icon", // kept for future Icon Composer support
+  // New canonical single source of truth (1024 master)
+  productionMacIconPng: "assets/prod/new-logo.png",
+  productionMacLegacyIconPng: "assets/prod/new-logo.png",
+  productionLinuxIconPng: "assets/prod/new-logo.png",
+  productionWindowsIconIco: "assets/prod/new-logo-windows.ico",
+  // Web assets generated from the same master
+  productionWebFaviconIco: "assets/prod/new-logo-web-favicon.ico",
+  productionWebFavicon16Png: "assets/prod/new-logo-web-favicon-16x16.png",
+  productionWebFavicon32Png: "assets/prod/new-logo-web-favicon-32x32.png",
+  productionWebAppleTouchIconPng: "assets/prod/new-logo-web-apple-touch-180.png",
+  // Dev overrides now point at the new prod web assets for brand consistency during development
+  developmentWindowsIconIco: "assets/prod/new-logo-windows.ico",
+  developmentWebFaviconIco: "assets/prod/new-logo-web-favicon.ico",
+  developmentWebFavicon16Png: "assets/prod/new-logo-web-favicon-16x16.png",
+  developmentWebFavicon32Png: "assets/prod/new-logo-web-favicon-32x32.png",
+  developmentWebAppleTouchIconPng: "assets/prod/new-logo-web-apple-touch-180.png",
 } as const;
 
 export interface IconOverride {

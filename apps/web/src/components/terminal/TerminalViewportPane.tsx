@@ -8,8 +8,6 @@ import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import type { ResolvedTerminalVisualIdentity } from "@t3tools/shared/terminalThreads";
 
 import {
-  Maximize2,
-  Minimize2,
   Plus,
   SquareSplitHorizontal,
   SquareSplitVertical,
@@ -19,11 +17,7 @@ import {
 } from "~/lib/icons";
 import { cn } from "~/lib/utils";
 
-import type {
-  ThreadTerminalLayoutNode,
-  ThreadTerminalPresentationMode,
-  ThreadTerminalSplitNode,
-} from "../../types";
+import type { ThreadTerminalLayoutNode, ThreadTerminalSplitNode } from "../../types";
 import TerminalActivityIndicator from "./TerminalActivityIndicator";
 import TerminalIdentityIcon from "./TerminalIdentityIcon";
 
@@ -45,8 +39,6 @@ interface TerminalViewportPaneProps {
   onNewTerminalTab?: ((terminalId: string) => void) | undefined;
   onMoveTerminalToGroup?: ((terminalId: string) => void) | undefined;
   onCloseTerminal?: ((terminalId: string) => void) | undefined;
-  presentationMode: ThreadTerminalPresentationMode;
-  onTogglePresentationMode?: (() => void) | undefined;
 }
 
 function normalizeWeights(weights: number[]): number[] {
@@ -110,8 +102,6 @@ export default function TerminalViewportPane({
   onNewTerminalTab,
   onMoveTerminalToGroup,
   onCloseTerminal,
-  presentationMode,
-  onTogglePresentationMode,
 }: TerminalViewportPaneProps) {
   const renderNode = (node: ThreadTerminalLayoutNode): ReactNode => {
     if (node.type === "terminal") {
@@ -215,22 +205,6 @@ export default function TerminalViewportPane({
                   onClick={moveActiveTerminalToGroup}
                 >
                   <TerminalSquareIcon className="size-3.25" />
-                </PaneActionButton>
-              ) : null}
-              {onTogglePresentationMode ? (
-                <PaneActionButton
-                  label={
-                    presentationMode === "workspace"
-                      ? "Collapse terminal into chat drawer"
-                      : "Expand terminal into workspace"
-                  }
-                  onClick={onTogglePresentationMode}
-                >
-                  {presentationMode === "workspace" ? (
-                    <Minimize2 className="size-3.25" />
-                  ) : (
-                    <Maximize2 className="size-3.25" />
-                  )}
                 </PaneActionButton>
               ) : null}
               {onSplitTerminalRight ? (

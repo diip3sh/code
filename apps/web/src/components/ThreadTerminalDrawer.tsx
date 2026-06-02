@@ -1,7 +1,7 @@
 // FILE: ThreadTerminalDrawer.tsx
-// Purpose: Hosts the terminal drawer/workspace chrome and each xterm viewport for a thread.
-// Layer: Chat terminal workspace UI
-// Depends on: xterm addons, native terminal APIs, and terminal workspace state from ChatView.
+// Purpose: Hosts the terminal drawer chrome and each xterm viewport for a thread.
+// Layer: Chat terminal UI
+// Depends on: xterm addons, native terminal APIs, and terminal state from ChatView.
 
 import { SearchAddon } from "@xterm/addon-search";
 import { Plus, SquareSplitHorizontal, SquareSplitVertical, Trash2 } from "~/lib/icons";
@@ -11,17 +11,9 @@ import { Terminal } from "@xterm/xterm";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type TerminalContextSelection } from "~/lib/terminalContext";
 import { readNativeApi } from "~/nativeApi";
-import {
-  MAX_TERMINALS_PER_GROUP,
-  type ThreadTerminalGroup,
-  type ThreadTerminalPresentationMode,
-} from "../types";
+import { MAX_TERMINALS_PER_GROUP, type ThreadTerminalGroup } from "../types";
 import { cn } from "~/lib/utils";
-import {
-  type TerminalChromeActionItem,
-  TerminalSidebar,
-  TerminalWorkspaceTabBar,
-} from "./terminal/TerminalChrome";
+import { type TerminalChromeActionItem, TerminalSidebar } from "./terminal/TerminalChrome";
 import { resolveThreadTerminalLayout } from "./terminal/TerminalLayout";
 import {
   resolveTerminalSelectionActionPosition,
@@ -400,7 +392,6 @@ interface ThreadTerminalDrawerProps {
   cwd: string;
   runtimeEnv?: Record<string, string>;
   height: number;
-  presentationMode: ThreadTerminalPresentationMode;
   isVisible?: boolean;
   terminalIds: string[];
   terminalLabelsById: Record<string, string>;
@@ -416,15 +407,12 @@ interface ThreadTerminalDrawerProps {
   onSplitTerminalDown: () => void;
   onNewTerminal: () => void;
   onNewTerminalTab: (terminalId: string) => void;
-  onMoveTerminalToGroup: (terminalId: string) => void;
   splitShortcutLabel?: string | undefined;
   splitDownShortcutLabel?: string | undefined;
   newShortcutLabel?: string | undefined;
   closeShortcutLabel?: string | undefined;
-  workspaceCloseShortcutLabel?: string | undefined;
   onActiveTerminalChange: (terminalId: string) => void;
   onCloseTerminal: (terminalId: string) => void;
-  onCloseTerminalGroup: (groupId: string) => void;
   onHeightChange: (height: number) => void;
   onResizeTerminalSplit: (groupId: string, splitId: string, weights: number[]) => void;
   onTerminalMetadataChange: (
@@ -436,7 +424,6 @@ interface ThreadTerminalDrawerProps {
     activity: { hasRunningSubprocess: boolean; agentState: TerminalActivityState | null },
   ) => void;
   onAddTerminalContext: (selection: TerminalContextSelection) => void;
-  onTogglePresentationMode?: (() => void) | undefined;
 }
 
 export default function ThreadTerminalDrawer({
@@ -444,7 +431,6 @@ export default function ThreadTerminalDrawer({
   cwd,
   runtimeEnv,
   height,
-  presentationMode,
   isVisible = true,
   terminalIds,
   terminalLabelsById,
@@ -460,23 +446,18 @@ export default function ThreadTerminalDrawer({
   onSplitTerminalDown,
   onNewTerminal,
   onNewTerminalTab,
-  onMoveTerminalToGroup,
   splitShortcutLabel,
   splitDownShortcutLabel,
   newShortcutLabel,
   closeShortcutLabel,
-  workspaceCloseShortcutLabel,
   onActiveTerminalChange,
   onCloseTerminal,
-  onCloseTerminalGroup,
   onHeightChange,
   onResizeTerminalSplit,
   onTerminalMetadataChange,
   onTerminalActivityChange,
   onAddTerminalContext,
-  onTogglePresentationMode,
 }: ThreadTerminalDrawerProps) {
-  const isWorkspaceMode = presentationMode === "workspace";
   const previousRuntimeKeysRef = useRef<Set<string>>(new Set());
   const { drawerHeight, handleResizePointerDown, handleResizePointerMove, handleResizePointerEnd } =
     useTerminalDrawerHeight({
@@ -547,9 +528,7 @@ export default function ThreadTerminalDrawer({
   const newTerminalActionLabel = newShortcutLabel
     ? `New Terminal (${newShortcutLabel})`
     : "New Terminal";
-  const resolvedCloseShortcutLabel = isWorkspaceMode
-    ? (workspaceCloseShortcutLabel ?? closeShortcutLabel)
-    : closeShortcutLabel;
+  const resolvedCloseShortcutLabel = closeShortcutLabel;
   const closeTerminalActionLabel = resolvedCloseShortcutLabel
     ? `Close Terminal (${resolvedCloseShortcutLabel})`
     : "Close Terminal";
@@ -589,49 +568,21 @@ export default function ThreadTerminalDrawer({
       children: <Trash2 className="size-3.25" />,
     },
   ];
-  const showTerminalGroupTabs = resolvedTerminalGroups.length > 1;
-  const topTabBarActions = terminalChromeActions;
-
   return (
     <aside
-      className={cn(
-        "thread-terminal-drawer relative flex min-w-0 flex-col overflow-hidden bg-background",
-        isWorkspaceMode ? "h-full min-h-0" : "shrink-0 border-t border-border/70",
-      )}
-      style={isWorkspaceMode ? undefined : { height: `${drawerHeight}px` }}
+      className="thread-terminal-drawer relative flex min-w-0 shrink-0 flex-col overflow-hidden border-t border-border/70 bg-background"
+      style={{ height: `${drawerHeight}px` }}
     >
-      {!isWorkspaceMode ? (
-        <div
-          className="absolute inset-x-0 top-0 z-20 h-1.5 cursor-row-resize"
-          onPointerDown={handleResizePointerDown}
-          onPointerMove={handleResizePointerMove}
-          onPointerUp={handleResizePointerEnd}
-          onPointerCancel={handleResizePointerEnd}
-        />
-      ) : null}
-
-      {showTerminalGroupTabs ? (
-        <TerminalWorkspaceTabBar
-          terminalGroups={resolvedTerminalGroups}
-          activeGroupId={resolvedActiveGroupId}
-          terminalVisualIdentityById={terminalVisualIdentityById}
-          actions={topTabBarActions}
-          onActiveGroupChange={(groupId) => {
-            const nextGroup = resolvedTerminalGroups.find((group) => group.id === groupId);
-            if (!nextGroup) return;
-            onActiveTerminalChange(nextGroup.activeTerminalId);
-          }}
-          onCloseGroup={onCloseTerminalGroup}
-        />
-      ) : null}
+      <div
+        className="absolute inset-x-0 top-0 z-20 h-1.5 cursor-row-resize"
+        onPointerDown={handleResizePointerDown}
+        onPointerMove={handleResizePointerMove}
+        onPointerUp={handleResizePointerEnd}
+        onPointerCancel={handleResizePointerEnd}
+      />
 
       <div className="min-h-0 w-full flex-1">
-        <div
-          className={cn(
-            "flex h-full min-h-0",
-            hasTerminalSidebar && !isWorkspaceMode ? "gap-1.5" : "",
-          )}
-        >
+        <div className={cn("flex h-full min-h-0", hasTerminalSidebar ? "gap-1.5" : "")}>
           <div className="min-w-0 flex-1 h-full">
             <TerminalViewportPane
               groupId={resolvedActiveGroupId}
@@ -663,10 +614,8 @@ export default function ThreadTerminalDrawer({
                       onNewTerminalTab(terminalId);
                     }
               }
-              onMoveTerminalToGroup={isWorkspaceMode ? onMoveTerminalToGroup : undefined}
+              onMoveTerminalToGroup={undefined}
               onCloseTerminal={onCloseTerminal}
-              presentationMode={presentationMode}
-              onTogglePresentationMode={onTogglePresentationMode}
               renderViewport={(terminalId, options) => (
                 <TerminalViewport
                   key={terminalId}
@@ -688,7 +637,7 @@ export default function ThreadTerminalDrawer({
             />
           </div>
 
-          {hasTerminalSidebar && !isWorkspaceMode ? (
+          {hasTerminalSidebar ? (
             <TerminalSidebar
               terminalIds={normalizedTerminalIds}
               terminalGroups={resolvedTerminalGroups}

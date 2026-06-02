@@ -57,15 +57,8 @@ function whenNot(node: KeybindingWhenNode): KeybindingWhenNode {
   return { type: "not", node };
 }
 
-function whenAnd(left: KeybindingWhenNode, right: KeybindingWhenNode): KeybindingWhenNode {
-  return { type: "and", left, right };
-}
-
 const whenNotTerminalFocus = whenNot(whenIdentifier("terminalFocus"));
-const whenThreadJumpAvailable = whenAnd(
-  whenNotTerminalFocus,
-  whenNot(whenIdentifier("terminalWorkspaceOpen")),
-);
+const whenThreadJumpAvailable = whenNotTerminalFocus;
 
 export const DEFAULT_SHORTCUT_FALLBACKS: ResolvedKeybindingsConfig = [
   {
@@ -157,25 +150,6 @@ export const DEFAULT_SHORTCUT_FALLBACKS: ResolvedKeybindingsConfig = [
     command: "thread.jump.9",
     shortcut: commandShortcut("9"),
     whenAst: whenThreadJumpAvailable,
-  },
-  {
-    command: "terminal.workspace.newFullWidth",
-    shortcut: commandShortcut("j", { shiftKey: true }),
-  },
-  {
-    command: "terminal.workspace.closeActive",
-    shortcut: commandShortcut("w"),
-    whenAst: whenIdentifier("terminalWorkspaceOpen"),
-  },
-  {
-    command: "terminal.workspace.terminal",
-    shortcut: commandShortcut("1"),
-    whenAst: whenIdentifier("terminalWorkspaceOpen"),
-  },
-  {
-    command: "terminal.workspace.chat",
-    shortcut: commandShortcut("2"),
-    whenAst: whenIdentifier("terminalWorkspaceOpen"),
   },
 ];
 

@@ -470,16 +470,6 @@ export function buildExpiredTerminalContextToastCopy(
   };
 }
 
-export function shouldRenderTerminalWorkspace(options: {
-  activeProjectExists: boolean;
-  presentationMode: "drawer" | "workspace";
-  terminalOpen: boolean;
-}): boolean {
-  return (
-    options.terminalOpen && options.presentationMode === "workspace" && options.activeProjectExists
-  );
-}
-
 export function shouldAutoDeleteTerminalThreadOnLastClose(options: {
   isLastTerminal: boolean;
   isServerThread: boolean;

@@ -73,7 +73,7 @@ export function useHandleNewThread() {
       };
       const activateThreadEntryPoint = (threadId: ThreadId) => {
         if (entryPoint === "terminal") {
-          openTerminalThreadPage(threadId, { terminalOnly: true });
+          openTerminalThreadPage(threadId);
           return;
         }
         openChatThreadPage(threadId);

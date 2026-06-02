@@ -24,6 +24,12 @@ import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 
 const BuildPlatform = Schema.Literals(["mac", "linux", "win"]);
 const BuildArch = Schema.Literals(["arm64", "x64", "universal"]);
+const STAGED_TRANSITIVE_CATALOG = {
+  "@pierre/theme": "0.0.22",
+  diff: "8.0.3",
+  "hast-util-to-html": "9.0.5",
+  lru_map: "0.4.1",
+} as const;
 
 const RepoRoot = Effect.service(Path.Path).pipe(
   Effect.flatMap((path) => path.fromFileUrl(new URL("..", import.meta.url))),
@@ -203,6 +209,11 @@ interface StagePackageJson {
     readonly electron: string;
   };
   readonly overrides: Record<string, unknown>;
+  // Embedded so `bun install --production` in the isolated staging directory
+  // can resolve `catalog:` specifiers coming from transitive dependency manifests.
+  readonly workspaces?: {
+    readonly catalog: Record<string, unknown>;
+  };
 }
 
 const AzureTrustedSigningOptionsConfig = Config.all({
@@ -639,6 +650,17 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
       }),
   });
 
+  // Capture the full monorepo catalog so we can embed it into the synthetic
+  // staged package.json. This allows `bun install --production` (run later
+  // inside an isolated temp directory with no workspace context) to resolve
+  // any `catalog:` specifiers that may exist in the published manifests of
+  // transitive dependencies (e.g. certain @pierre/* packages used by the diff viewer).
+  const rootCatalog = rootPackageJson.workspaces?.catalog ?? {};
+  const stagedCatalog = {
+    ...rootCatalog,
+    ...STAGED_TRANSITIVE_CATALOG,
+  };
+
   const appVersion = options.version ?? serverPackageJson.version;
   const commitHash = resolveGitCommitHash(repoRoot);
   const mkdir = options.keepStage ? fs.makeTempDirectory : fs.makeTempDirectoryScoped;
@@ -739,15 +761,31 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
       electron: electronVersion,
     },
     overrides: resolvedOverrides,
+    // Re-embed the monorepo catalog. This is required because the synthetic
+    // package.json is written into an isolated temp directory and then
+    // `bun install --production` is executed there. Without a catalog in
+    // scope, any transitive dependency that ships a `catalog:` specifier
+    // (currently seen with certain @pierre/* packages) will cause the build
+    // to fail with "catalog: failed to resolve".
+    workspaces: {
+      catalog: stagedCatalog,
+    },
   };
 
   const stagePackageJsonString = yield* encodeJsonString(stagePackageJson);
   yield* fs.writeFileString(path.join(stageAppDir, "package.json"), `${stagePackageJsonString}\n`);
 
+  const installEnv: NodeJS.ProcessEnv = {
+    ...process.env,
+  };
+  delete installEnv.CI;
+  delete installEnv.CODEX_CI;
+
   yield* Effect.log("[desktop-artifact] Installing staged production dependencies...");
   yield* runCommand(
     ChildProcess.make({
       cwd: stageAppDir,
+      env: installEnv,
       ...commandOutputOptions(options.verbose),
       // Windows needs shell mode to resolve .cmd shims (e.g. bun.cmd).
       shell: process.platform === "win32",

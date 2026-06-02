@@ -5,9 +5,11 @@
 
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { type ProjectDirectoryEntry } from "@t3tools/contracts";
+import { useQuery } from "@tanstack/react-query";
 import { readNativeApi } from "../../nativeApi";
 import { useStore } from "../../store";
 import { createSidebarDisplayThreadsSelector } from "../../storeSelectors";
+import { serverConfigQueryOptions } from "../../lib/serverReactQuery";
 import { PlusIcon, XIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
 import { FolderClosed } from "../FolderClosed";
@@ -24,7 +26,6 @@ import {
   ComboboxSeparator,
   ComboboxTrigger,
 } from "../ui/combobox";
-import { useWorkspaceStore } from "../../workspaceStore";
 
 interface ProjectPickerProps {
   align?: "start" | "center" | "end";
@@ -71,7 +72,8 @@ export const ProjectPicker = memo(function ProjectPicker({
 }: ProjectPickerProps) {
   const projects = useStore((state) => state.projects);
   const sidebarThreads = useStore(useMemo(() => createSidebarDisplayThreadsSelector(), []));
-  const homeDir = useWorkspaceStore((state) => state.homeDir);
+  const serverConfigQuery = useQuery(serverConfigQueryOptions());
+  const homeDir = serverConfigQuery.data?.homeDir ?? null;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);

@@ -50,8 +50,8 @@ export const providerDiscoveryQueryKeys = {
     ["provider-discovery", "composer-capabilities", provider] as const,
   commands: (provider: ProviderKind, cwd: string | null, query: string, agentDir: string | null) =>
     ["provider-discovery", "commands", provider, cwd, query, agentDir] as const,
-  skills: (provider: ProviderKind, cwd: string | null, query: string, agentDir: string | null) =>
-    ["provider-discovery", "skills", provider, cwd, query, agentDir] as const,
+  skills: (provider: ProviderKind, cwd: string | null, agentDir: string | null) =>
+    ["provider-discovery", "skills", provider, cwd, agentDir] as const,
   plugins: (provider: ProviderKind, cwd: string | null) =>
     ["provider-discovery", "plugins", provider, cwd] as const,
   plugin: (provider: ProviderKind, marketplacePath: string, pluginName: string) =>
@@ -85,12 +85,7 @@ export function providerSkillsQueryOptions(input: {
   enabled?: boolean;
 }) {
   return queryOptions({
-    queryKey: providerDiscoveryQueryKeys.skills(
-      input.provider,
-      input.cwd,
-      input.query,
-      input.agentDir ?? null,
-    ),
+    queryKey: providerDiscoveryQueryKeys.skills(input.provider, input.cwd, input.agentDir ?? null),
     queryFn: async () => {
       const api = ensureNativeApi();
       if (!input.cwd) {
@@ -105,6 +100,7 @@ export function providerSkillsQueryOptions(input: {
     },
     enabled: (input.enabled ?? true) && input.cwd !== null,
     staleTime: 30_000,
+    retry: false,
     placeholderData: (previous) => previous ?? EMPTY_SKILLS_RESULT,
   });
 }

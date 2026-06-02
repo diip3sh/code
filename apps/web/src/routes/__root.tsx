@@ -27,7 +27,6 @@ import ShortcutsDialog from "../components/ShortcutsDialog";
 import WhatsNewDialog from "../components/WhatsNewDialog";
 import { useWhatsNew } from "../whatsNew/useWhatsNew";
 import { WhatsNewPopoutCard } from "../whatsNew/WhatsNewPopoutCard";
-import { shouldRenderTerminalWorkspace } from "../components/ChatView.logic";
 import { Button } from "../components/ui/button";
 import { AnchoredToastProvider, ToastProvider, toastManager } from "../components/ui/toast";
 import { resolveAndPersistPreferredEditor } from "../editorPreferences";
@@ -58,7 +57,6 @@ import { providerQueryKeys } from "../lib/providerReactQuery";
 import { projectQueryKeys } from "../lib/projectReactQuery";
 import { collectActiveTerminalThreadIds } from "../lib/terminalStateCleanup";
 import { TaskCompletionNotifications } from "../notifications/taskCompletion";
-import { useWorkspaceStore, workspaceThreadId } from "../workspaceStore";
 import {
   subscribeRetainedThreadDetailIdChanges,
   useRetainedThreadDetailIds,
@@ -339,11 +337,6 @@ function GlobalShortcutsDialog() {
       : null,
   );
   const terminalOpen = activeThreadTerminalState?.terminalOpen ?? false;
-  const terminalWorkspaceOpen = shouldRenderTerminalWorkspace({
-    activeProjectExists: activeProject !== null,
-    presentationMode: activeThreadTerminalState?.presentationMode ?? "drawer",
-    terminalOpen,
-  });
 
   useEffect(() => {
     const onMenuAction = window.desktopBridge?.onMenuAction;
@@ -372,7 +365,6 @@ function GlobalShortcutsDialog() {
       context={{
         terminalFocus: isTerminalFocused(),
         terminalOpen,
-        terminalWorkspaceOpen,
       }}
       isElectron={isElectron}
     />
@@ -583,8 +575,6 @@ function EventRouter() {
   const removeOrphanedTerminalStates = useTerminalStateStore(
     (store) => store.removeOrphanedTerminalStates,
   );
-  const setWorkspaceHomeDir = useWorkspaceStore((store) => store.setHomeDir);
-  const workspacePages = useWorkspaceStore((store) => store.workspacePages);
   const serverThreads = useStore((store) => store.threads);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -624,7 +614,6 @@ function EventRouter() {
     }
     return [...nextThreadIds];
   }, [retainedThreadIds, serverThreadIds, visibleThreadIds]);
-  const workspacePagesRef = useRef(workspacePages);
   const pathnameRef = useRef(pathname);
   const handledBootstrapThreadIdRef = useRef<string | null>(null);
   const routeVisibleThreadIdsRef = useRef(visibleThreadIds);
@@ -633,7 +622,6 @@ function EventRouter() {
     ((threadIds: readonly ThreadId[]) => Promise<void>) | null
   >(null);
 
-  workspacePagesRef.current = workspacePages;
   pathnameRef.current = pathname;
   routeVisibleThreadIdsRef.current = visibleThreadIds;
   visibleThreadIdsRef.current = subscribedThreadIds;
@@ -801,9 +789,7 @@ function EventRouter() {
           archivedAt: thread.archivedAt ?? null,
         })),
         draftThreadIds,
-        retainedThreadIds: workspacePagesRef.current.map((workspace) =>
-          workspaceThreadId(workspace.id),
-        ),
+        retainedThreadIds: [],
       });
       removeOrphanedTerminalStates(activeThreadIds);
     };
@@ -997,7 +983,6 @@ function EventRouter() {
     });
     const unsubWelcome = onServerWelcome((payload) => {
       void (async () => {
-        setWorkspaceHomeDir(payload.homeDir);
         await ensureScopedSubscriptions();
         if (disposed) {
           return;
@@ -1147,7 +1132,6 @@ function EventRouter() {
     queryClient,
     removeOrphanedTerminalStates,
     setProjectExpanded,
-    setWorkspaceHomeDir,
     syncServerShellSnapshot,
     syncServerThreadDetailHotPath,
   ]);

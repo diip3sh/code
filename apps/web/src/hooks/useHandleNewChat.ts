@@ -1,12 +1,14 @@
 import { useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { ensureHomeChatProject } from "../lib/chatProjects";
+import { serverConfigQueryOptions } from "../lib/serverReactQuery";
 import type { NewThreadOptions } from "../lib/threadBootstrap";
-import { useWorkspaceStore } from "../workspaceStore";
 import { useHandleNewThread } from "./useHandleNewThread";
 
 export function useHandleNewChat() {
-  const homeDir = useWorkspaceStore((state) => state.homeDir);
+  const serverConfigQuery = useQuery(serverConfigQueryOptions());
+  const homeDir = serverConfigQuery.data?.homeDir ?? null;
   const { handleNewThread } = useHandleNewThread();
 
   const handleNewChat = useCallback(

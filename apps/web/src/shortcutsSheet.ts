@@ -12,7 +12,6 @@ import type { ProjectScript } from "./types";
 export interface ShortcutSheetContext {
   terminalFocus: boolean;
   terminalOpen: boolean;
-  terminalWorkspaceOpen: boolean;
   [key: string]: boolean;
 }
 
@@ -147,29 +146,6 @@ const THREAD_JUMP_DEFINITIONS: readonly ShortcutDefinition[] = Array.from(
   }),
 );
 
-const WORKSPACE_DEFINITIONS: readonly ShortcutDefinition[] = [
-  {
-    command: "terminal.workspace.newFullWidth",
-    label: "Open full-width terminal workspace",
-    description: "Expand the active thread into the workspace terminal layout.",
-  },
-  {
-    command: "terminal.workspace.terminal",
-    label: "Focus terminal tab",
-    description: "Switch the workspace to the terminal tab.",
-  },
-  {
-    command: "terminal.workspace.chat",
-    label: "Focus chat tab",
-    description: "Switch the workspace back to the chat tab.",
-  },
-  {
-    command: "terminal.workspace.closeActive",
-    label: "Close active workspace panel",
-    description: "Close the currently focused workspace panel or tab.",
-  },
-] as const;
-
 function modSlashLabel(platform: string): string {
   return isMacPlatform(platform) ? "⌘/" : "Ctrl+/";
 }
@@ -244,56 +220,19 @@ export function buildShortcutSheetSections(
     }
   }
 
-  const currentNavigationEntries = options.context.terminalWorkspaceOpen
-    ? definitionsToEntries(
-        WORKSPACE_DEFINITIONS,
-        options.keybindings,
-        options.platform,
-        options.context,
-      )
-    : definitionsToEntries(
-        THREAD_JUMP_DEFINITIONS,
-        options.keybindings,
-        options.platform,
-        options.context,
-      );
+  const currentNavigationEntries = definitionsToEntries(
+    THREAD_JUMP_DEFINITIONS,
+    options.keybindings,
+    options.platform,
+    options.context,
+  );
 
   sections.push({
     id: "available-now",
     title: "Available now",
-    description: options.context.terminalWorkspaceOpen
-      ? "These reflect the active workspace-terminal context."
-      : "These reflect the current chat and sidebar context.",
+    description: "These reflect the current chat and sidebar context.",
     entries: [...currentEntries, ...currentNavigationEntries],
   });
-
-  const alternateContext: ShortcutSheetContext = options.context.terminalWorkspaceOpen
-    ? { ...options.context, terminalWorkspaceOpen: false }
-    : {
-        ...options.context,
-        terminalOpen: true,
-        terminalWorkspaceOpen: true,
-      };
-  const alternateDefinitions = options.context.terminalWorkspaceOpen
-    ? THREAD_JUMP_DEFINITIONS
-    : WORKSPACE_DEFINITIONS;
-  const alternateEntries = definitionsToEntries(
-    alternateDefinitions,
-    options.keybindings,
-    options.platform,
-    alternateContext,
-  );
-  if (alternateEntries.length > 0) {
-    sections.push({
-      id: "alternate-context",
-      title: options.context.terminalWorkspaceOpen ? "Outside workspace mode" : "In workspace mode",
-      description: options.context.terminalWorkspaceOpen
-        ? "Number-row jumps return when the terminal workspace is closed."
-        : "These bindings take over when the terminal switches into workspace mode.",
-      tone: "muted",
-      entries: alternateEntries,
-    });
-  }
 
   const projectScriptEntries = options.projectScripts
     .map((script) => {

@@ -18,7 +18,7 @@ const PROJECT_SCRIPTS: ProjectScript[] = [
 ];
 
 describe("buildShortcutSheetSections", () => {
-  it("includes the help shortcut and current thread jumps outside workspace mode", () => {
+  it("includes the help shortcut and current thread jumps", () => {
     const sections = buildShortcutSheetSections({
       keybindings: [
         {
@@ -38,7 +38,6 @@ describe("buildShortcutSheetSections", () => {
       context: {
         terminalFocus: false,
         terminalOpen: false,
-        terminalWorkspaceOpen: false,
       },
       isElectron: true,
     });
@@ -49,34 +48,7 @@ describe("buildShortcutSheetSections", () => {
         (entry) => entry.id === "thread.jump.1" && entry.shortcutLabel === "⌘1",
       ),
     ).toBe(true);
-    expect(sections[1]?.title).toBe("In workspace mode");
-    expect(sections[2]?.entries[0]?.shortcutLabel).toBe("⌘R");
-  });
-
-  it("switches to workspace shortcuts when the workspace is open", () => {
-    const sections = buildShortcutSheetSections({
-      keybindings: [],
-      projectScripts: [],
-      platform: "Linux",
-      context: {
-        terminalFocus: false,
-        terminalOpen: true,
-        terminalWorkspaceOpen: true,
-      },
-      isElectron: false,
-    });
-
-    expect(
-      sections[0]?.entries.some(
-        (entry) => entry.id === "terminal.workspace.terminal" && entry.shortcutLabel === "Ctrl+1",
-      ),
-    ).toBe(true);
-    expect(sections[1]?.title).toBe("Outside workspace mode");
-    expect(
-      sections[1]?.entries.some(
-        (entry) => entry.id === "thread.jump.1" && entry.shortcutLabel === "Ctrl+1",
-      ),
-    ).toBe(true);
+    expect(sections[1]?.entries[0]?.shortcutLabel).toBe("⌘R");
   });
 
   it("falls back to the legacy new-chat alias when needed", () => {
@@ -99,7 +71,6 @@ describe("buildShortcutSheetSections", () => {
       context: {
         terminalFocus: false,
         terminalOpen: false,
-        terminalWorkspaceOpen: false,
       },
       isElectron: false,
     });

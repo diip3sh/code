@@ -18,7 +18,6 @@ import {
   shouldConsumePendingCustomBinaryConfirmation,
   shouldShowComposerModelBootstrapSkeleton,
   shouldStartActiveTurnLayoutGrace,
-  shouldRenderTerminalWorkspace,
 } from "./ChatView.logic";
 
 describe("voice helpers", () => {
@@ -368,35 +367,6 @@ describe("buildExpiredTerminalContextToastCopy", () => {
       title: "Expired terminal contexts omitted from message",
       description: "Re-add it if you want that terminal output included.",
     });
-  });
-});
-
-describe("shouldRenderTerminalWorkspace", () => {
-  it("requires an active project to render workspace mode", () => {
-    expect(
-      shouldRenderTerminalWorkspace({
-        activeProjectExists: false,
-        presentationMode: "workspace",
-        terminalOpen: true,
-      }),
-    ).toBe(false);
-  });
-
-  it("renders only for an open workspace terminal", () => {
-    expect(
-      shouldRenderTerminalWorkspace({
-        activeProjectExists: true,
-        presentationMode: "workspace",
-        terminalOpen: true,
-      }),
-    ).toBe(true);
-    expect(
-      shouldRenderTerminalWorkspace({
-        activeProjectExists: true,
-        presentationMode: "drawer",
-        terminalOpen: true,
-      }),
-    ).toBe(false);
   });
 });
 

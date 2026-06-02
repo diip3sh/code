@@ -17,8 +17,6 @@ import {
   type ThreadTerminalGroup,
   type ThreadTerminalSplitPosition,
   type ThreadTerminalPresentationMode,
-  type ThreadTerminalWorkspaceLayout,
-  type ThreadTerminalWorkspaceTab,
 } from "./types";
 import {
   addTerminalTabToGroupLayout,
@@ -30,17 +28,11 @@ import {
   setActiveTerminalInGroupLayout,
   splitTerminalGroupLayout,
 } from "./terminalPaneLayout";
-import {
-  createWorkspaceTerminalGroupFromPreset,
-  type WorkspaceLayoutPresetId,
-} from "./workspaceTerminalLayoutPresets";
 
 export interface ThreadTerminalState {
   entryPoint: ThreadPrimarySurface;
   terminalOpen: boolean;
   presentationMode: ThreadTerminalPresentationMode;
-  workspaceLayout: ThreadTerminalWorkspaceLayout;
-  workspaceActiveTab: ThreadTerminalWorkspaceTab;
   terminalHeight: number;
   terminalIds: string[];
   terminalLabelsById: Record<string, string>;
@@ -320,8 +312,6 @@ function threadTerminalStateEqual(left: ThreadTerminalState, right: ThreadTermin
     left.entryPoint === right.entryPoint &&
     left.terminalOpen === right.terminalOpen &&
     left.presentationMode === right.presentationMode &&
-    left.workspaceLayout === right.workspaceLayout &&
-    left.workspaceActiveTab === right.workspaceActiveTab &&
     left.terminalHeight === right.terminalHeight &&
     left.activeTerminalId === right.activeTerminalId &&
     left.activeTerminalGroupId === right.activeTerminalGroupId &&
@@ -341,8 +331,6 @@ const DEFAULT_THREAD_TERMINAL_STATE: ThreadTerminalState = Object.freeze({
   entryPoint: "chat",
   terminalOpen: false,
   presentationMode: "drawer",
-  workspaceLayout: "both",
-  workspaceActiveTab: "terminal",
   terminalHeight: DEFAULT_THREAD_TERMINAL_HEIGHT,
   terminalIds: [DEFAULT_THREAD_TERMINAL_ID],
   terminalLabelsById: { [DEFAULT_THREAD_TERMINAL_ID]: "Terminal 1" },
@@ -429,9 +417,7 @@ function normalizeThreadTerminalState(state: ThreadTerminalState): ThreadTermina
   const normalized: ThreadTerminalState = {
     entryPoint: state.entryPoint === "terminal" ? "terminal" : "chat",
     terminalOpen: state.terminalOpen,
-    presentationMode: state.presentationMode === "workspace" ? "workspace" : "drawer",
-    workspaceLayout: state.workspaceLayout === "terminal-only" ? "terminal-only" : "both",
-    workspaceActiveTab: state.workspaceActiveTab === "chat" ? "chat" : "terminal",
+    presentationMode: "drawer",
     terminalHeight:
       Number.isFinite(state.terminalHeight) && state.terminalHeight > 0
         ? state.terminalHeight
@@ -597,46 +583,21 @@ function setThreadTerminalOpen(state: ThreadTerminalState, open: boolean): Threa
 
 function openThreadChatPage(state: ThreadTerminalState): ThreadTerminalState {
   const normalized = normalizeThreadTerminalState(state);
-  const nextWorkspaceState =
-    normalized.terminalOpen && normalized.presentationMode === "workspace"
-      ? {
-          workspaceLayout: "both" as const,
-          workspaceActiveTab: "chat" as const,
-        }
-      : null;
-  if (normalized.entryPoint === "chat" && nextWorkspaceState === null) {
+  if (normalized.entryPoint === "chat") {
     return normalized;
-  }
-  if (nextWorkspaceState === null) {
-    return {
-      ...normalized,
-      entryPoint: "chat",
-    };
   }
   return {
     ...normalized,
     entryPoint: "chat",
-    ...nextWorkspaceState,
   };
 }
 
-function openThreadTerminalPage(
-  state: ThreadTerminalState,
-  options?: { terminalOnly?: boolean },
-): ThreadTerminalState {
+function openThreadTerminalPage(state: ThreadTerminalState): ThreadTerminalState {
   const normalized = normalizeThreadTerminalState(state);
-  const shouldUseTerminalOnlyLayout =
-    options?.terminalOnly ??
-    (normalized.entryPoint === "terminal" ? normalized.workspaceLayout === "terminal-only" : true);
-  const nextWorkspaceLayout = shouldUseTerminalOnlyLayout
-    ? "terminal-only"
-    : normalized.workspaceLayout;
   if (
     normalized.entryPoint === "terminal" &&
     normalized.terminalOpen &&
-    normalized.presentationMode === "workspace" &&
-    normalized.workspaceActiveTab === "terminal" &&
-    normalized.workspaceLayout === nextWorkspaceLayout
+    normalized.presentationMode === "drawer"
   ) {
     return normalized;
   }
@@ -644,9 +605,7 @@ function openThreadTerminalPage(
     ...normalized,
     entryPoint: "terminal",
     terminalOpen: true,
-    presentationMode: "workspace",
-    workspaceLayout: nextWorkspaceLayout,
-    workspaceActiveTab: "terminal",
+    presentationMode: "drawer",
     terminalAttentionStatesById: clearTerminalReviewState(
       normalized.terminalAttentionStatesById,
       normalized.activeTerminalId,
@@ -666,52 +625,6 @@ function setThreadTerminalPresentationMode(
     ...normalized,
     terminalOpen: true,
     presentationMode: mode,
-    workspaceLayout: normalized.workspaceLayout,
-    workspaceActiveTab: mode === "workspace" ? "terminal" : normalized.workspaceActiveTab,
-  };
-}
-
-function setThreadTerminalWorkspaceTab(
-  state: ThreadTerminalState,
-  tab: ThreadTerminalWorkspaceTab,
-): ThreadTerminalState {
-  const normalized = normalizeThreadTerminalState(state);
-  const nextWorkspaceLayout = tab === "chat" ? "both" : normalized.workspaceLayout;
-  if (normalized.workspaceActiveTab === tab && normalized.workspaceLayout === nextWorkspaceLayout) {
-    return normalized;
-  }
-  return {
-    ...normalized,
-    workspaceLayout: nextWorkspaceLayout,
-    workspaceActiveTab: tab,
-    terminalAttentionStatesById:
-      tab === "terminal"
-        ? clearTerminalReviewState(
-            normalized.terminalAttentionStatesById,
-            normalized.activeTerminalId,
-          )
-        : normalized.terminalAttentionStatesById,
-  };
-}
-
-function setThreadTerminalWorkspaceLayout(
-  state: ThreadTerminalState,
-  layout: ThreadTerminalWorkspaceLayout,
-): ThreadTerminalState {
-  const normalized = normalizeThreadTerminalState(state);
-  const nextActiveTab =
-    layout === "terminal-only"
-      ? "terminal"
-      : normalized.workspaceActiveTab === "chat"
-        ? "chat"
-        : "terminal";
-  if (normalized.workspaceLayout === layout && normalized.workspaceActiveTab === nextActiveTab) {
-    return normalized;
-  }
-  return {
-    ...normalized,
-    workspaceLayout: layout,
-    workspaceActiveTab: nextActiveTab,
   };
 }
 
@@ -965,8 +878,6 @@ function closeThreadTerminal(state: ThreadTerminalState, terminalId: string): Th
         entryPoint: "terminal",
         terminalOpen: false,
         presentationMode: normalized.presentationMode,
-        workspaceLayout: normalized.workspaceLayout,
-        workspaceActiveTab: "terminal",
         terminalHeight: normalized.terminalHeight,
       });
     }
@@ -1002,8 +913,6 @@ function closeThreadTerminal(state: ThreadTerminalState, terminalId: string): Th
     entryPoint: normalized.entryPoint,
     terminalOpen: normalized.terminalOpen,
     presentationMode: normalized.presentationMode,
-    workspaceLayout: normalized.workspaceLayout,
-    workspaceActiveTab: normalized.workspaceActiveTab,
     terminalHeight: normalized.terminalHeight,
     terminalIds: remainingTerminalIds,
     terminalLabelsById: Object.fromEntries(
@@ -1068,33 +977,6 @@ function resizeThreadTerminalSplit(
   });
 }
 
-function openThreadTerminalFullWidth(
-  state: ThreadTerminalState,
-  terminalId: string,
-): ThreadTerminalState {
-  const nextState = newThreadTerminal(state, terminalId);
-  return normalizeThreadTerminalState({
-    ...nextState,
-    terminalOpen: true,
-    presentationMode: "workspace",
-    workspaceLayout: "terminal-only",
-    workspaceActiveTab: "terminal",
-    activeTerminalId: terminalId,
-  });
-}
-
-function closeThreadWorkspaceChat(state: ThreadTerminalState): ThreadTerminalState {
-  const normalized = normalizeThreadTerminalState(state);
-  if (normalized.workspaceLayout === "terminal-only") {
-    return normalized;
-  }
-  return {
-    ...normalized,
-    workspaceLayout: "terminal-only",
-    workspaceActiveTab: "terminal",
-  };
-}
-
 function setThreadTerminalActivity(
   state: ThreadTerminalState,
   terminalId: string,
@@ -1133,63 +1015,6 @@ function setThreadTerminalActivity(
     terminalAttentionStatesById,
     runningTerminalIds: [...runningTerminalIds],
   };
-}
-
-function applyThreadWorkspaceLayoutPreset(
-  state: ThreadTerminalState,
-  presetId: WorkspaceLayoutPresetId,
-  terminalIds: readonly string[],
-): ThreadTerminalState {
-  const normalized = normalizeThreadTerminalState(state);
-  const nextTerminalIds = normalizeTerminalIds([...terminalIds]);
-  const activeTerminalId = nextTerminalIds.includes(normalized.activeTerminalId)
-    ? normalized.activeTerminalId
-    : (nextTerminalIds[0] ?? DEFAULT_THREAD_TERMINAL_ID);
-  const terminalLabelsById = ensureTerminalLabels({
-    terminalCliKindsById: normalizeTerminalCliKinds(
-      normalized.terminalCliKindsById,
-      nextTerminalIds,
-    ),
-    terminalIds: nextTerminalIds,
-    terminalLabelsById: normalizeTerminalLabels(normalized.terminalLabelsById, nextTerminalIds),
-    terminalTitleOverridesById: normalizeTerminalTitleOverrides(
-      normalized.terminalTitleOverridesById,
-      nextTerminalIds,
-    ),
-  });
-  const terminalTitleOverridesById = normalizeTerminalTitleOverrides(
-    normalized.terminalTitleOverridesById,
-    nextTerminalIds,
-  );
-  const terminalCliKindsById = normalizeTerminalCliKinds(
-    normalized.terminalCliKindsById,
-    nextTerminalIds,
-  );
-  const terminalGroup = createWorkspaceTerminalGroupFromPreset({
-    presetId,
-    terminalIds: nextTerminalIds,
-    activeTerminalId,
-  });
-
-  return normalizeThreadTerminalState({
-    ...normalized,
-    terminalOpen: true,
-    presentationMode: "workspace",
-    workspaceLayout: "terminal-only",
-    workspaceActiveTab: "terminal",
-    terminalIds: nextTerminalIds,
-    terminalLabelsById,
-    terminalTitleOverridesById,
-    terminalCliKindsById,
-    terminalAttentionStatesById: normalizeTerminalAttentionStates(
-      normalized.terminalAttentionStatesById,
-      nextTerminalIds,
-    ),
-    runningTerminalIds: normalizeRunningTerminalIds(normalized.runningTerminalIds, nextTerminalIds),
-    activeTerminalId,
-    terminalGroups: [terminalGroup],
-    activeTerminalGroupId: terminalGroup.id,
-  });
 }
 
 export function selectThreadTerminalState(
@@ -1234,11 +1059,9 @@ function updateTerminalStateByThreadId(
 interface TerminalStateStoreState {
   terminalStateByThreadId: Record<ThreadId, ThreadTerminalState>;
   openChatThreadPage: (threadId: ThreadId) => void;
-  openTerminalThreadPage: (threadId: ThreadId, options?: { terminalOnly?: boolean }) => void;
+  openTerminalThreadPage: (threadId: ThreadId) => void;
   setTerminalOpen: (threadId: ThreadId, open: boolean) => void;
   setTerminalPresentationMode: (threadId: ThreadId, mode: ThreadTerminalPresentationMode) => void;
-  setTerminalWorkspaceLayout: (threadId: ThreadId, layout: ThreadTerminalWorkspaceLayout) => void;
-  setTerminalWorkspaceTab: (threadId: ThreadId, tab: ThreadTerminalWorkspaceTab) => void;
   setTerminalHeight: (threadId: ThreadId, height: number) => void;
   setTerminalMetadata: (
     threadId: ThreadId,
@@ -1262,8 +1085,6 @@ interface TerminalStateStoreState {
   splitTerminalUp: (threadId: ThreadId, terminalId: string) => void;
   newTerminal: (threadId: ThreadId, terminalId: string) => void;
   newTerminalTab: (threadId: ThreadId, targetTerminalId: string, terminalId: string) => void;
-  openNewFullWidthTerminal: (threadId: ThreadId, terminalId: string) => void;
-  closeWorkspaceChat: (threadId: ThreadId) => void;
   setActiveTerminal: (threadId: ThreadId, terminalId: string) => void;
   closeTerminal: (threadId: ThreadId, terminalId: string) => void;
   closeTerminalGroup: (threadId: ThreadId, groupId: string) => void;
@@ -1277,11 +1098,6 @@ interface TerminalStateStoreState {
     threadId: ThreadId,
     terminalId: string,
     activity: { agentState: TerminalActivityState | null; hasRunningSubprocess: boolean },
-  ) => void;
-  applyWorkspaceLayoutPreset: (
-    threadId: ThreadId,
-    presetId: WorkspaceLayoutPresetId,
-    terminalIds: readonly string[],
   ) => void;
   clearTerminalState: (threadId: ThreadId) => void;
   removeOrphanedTerminalStates: (activeThreadIds: Set<ThreadId>) => void;
@@ -1313,16 +1129,12 @@ export const useTerminalStateStore = create<TerminalStateStoreState>()(
         terminalStateByThreadId: {},
         openChatThreadPage: (threadId) =>
           updateTerminal(threadId, (state) => openThreadChatPage(state)),
-        openTerminalThreadPage: (threadId, options) =>
-          updateTerminal(threadId, (state) => openThreadTerminalPage(state, options)),
+        openTerminalThreadPage: (threadId) =>
+          updateTerminal(threadId, (state) => openThreadTerminalPage(state)),
         setTerminalOpen: (threadId, open) =>
           updateTerminal(threadId, (state) => setThreadTerminalOpen(state, open)),
         setTerminalPresentationMode: (threadId, mode) =>
           updateTerminal(threadId, (state) => setThreadTerminalPresentationMode(state, mode)),
-        setTerminalWorkspaceLayout: (threadId, layout) =>
-          updateTerminal(threadId, (state) => setThreadTerminalWorkspaceLayout(state, layout)),
-        setTerminalWorkspaceTab: (threadId, tab) =>
-          updateTerminal(threadId, (state) => setThreadTerminalWorkspaceTab(state, tab)),
         setTerminalHeight: (threadId, height) =>
           updateTerminal(threadId, (state) => setThreadTerminalHeight(state, height)),
         setTerminalMetadata: (threadId, terminalId, metadata) =>
@@ -1351,10 +1163,6 @@ export const useTerminalStateStore = create<TerminalStateStoreState>()(
           updateTerminal(threadId, (state) =>
             newThreadTerminalTab(state, targetTerminalId, terminalId),
           ),
-        openNewFullWidthTerminal: (threadId, terminalId) =>
-          updateTerminal(threadId, (state) => openThreadTerminalFullWidth(state, terminalId)),
-        closeWorkspaceChat: (threadId) =>
-          updateTerminal(threadId, (state) => closeThreadWorkspaceChat(state)),
         setActiveTerminal: (threadId, terminalId) =>
           updateTerminal(threadId, (state) => setThreadActiveTerminal(state, terminalId)),
         closeTerminal: (threadId, terminalId) =>
@@ -1368,10 +1176,6 @@ export const useTerminalStateStore = create<TerminalStateStoreState>()(
         setTerminalActivity: (threadId, terminalId, activity) =>
           updateTerminal(threadId, (state) =>
             setThreadTerminalActivity(state, terminalId, activity),
-          ),
-        applyWorkspaceLayoutPreset: (threadId, presetId, terminalIds) =>
-          updateTerminal(threadId, (state) =>
-            applyThreadWorkspaceLayoutPreset(state, presetId, terminalIds),
           ),
         clearTerminalState: (threadId) =>
           updateTerminal(threadId, () => createDefaultThreadTerminalState()),

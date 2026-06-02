@@ -17,7 +17,6 @@ import {
 import { type TimestampFormat } from "../../appSettings";
 import { type TurnDiffSummary } from "../../types";
 import { ArrowDownIcon } from "~/lib/icons";
-import { cn } from "~/lib/utils";
 import { type ExpandedImagePreview } from "./ExpandedImagePreview";
 import { ChatEmptyStateHero } from "./ChatEmptyStateHero";
 import { MessagesTimeline } from "./MessagesTimeline";
@@ -60,7 +59,6 @@ interface ChatTranscriptPaneProps {
   resolvedTheme: "light" | "dark";
   revertTurnCountByUserMessageId: Map<MessageId, number>;
   scrollButtonVisible: boolean;
-  terminalWorkspaceTerminalTabActive: boolean;
   timelineEntries: ComponentProps<typeof MessagesTimeline>["timelineEntries"];
   timestampFormat: TimestampFormat;
   turnDiffSummaryByAssistantMessageId: Map<MessageId, TurnDiffSummary>;
@@ -105,7 +103,6 @@ export const ChatTranscriptPane = memo(function ChatTranscriptPane({
   resolvedTheme,
   revertTurnCountByUserMessageId,
   scrollButtonVisible,
-  terminalWorkspaceTerminalTabActive,
   timelineEntries,
   timestampFormat,
   turnDiffSummaryByAssistantMessageId,
@@ -114,11 +111,7 @@ export const ChatTranscriptPane = memo(function ChatTranscriptPane({
   return (
     <div
       data-chat-transcript-pane="true"
-      aria-hidden={terminalWorkspaceTerminalTabActive}
-      className={cn(
-        "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
-        terminalWorkspaceTerminalTabActive ? "pointer-events-none invisible" : "",
-      )}
+      className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
     >
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
         <MessagesTimeline

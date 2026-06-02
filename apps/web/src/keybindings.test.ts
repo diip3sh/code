@@ -105,25 +105,6 @@ const DEFAULT_BINDINGS = compile([
     whenAst: whenIdentifier("terminalFocus"),
   },
   {
-    shortcut: modShortcut("j", { shiftKey: true }),
-    command: "terminal.workspace.newFullWidth",
-  },
-  {
-    shortcut: modShortcut("w"),
-    command: "terminal.workspace.closeActive",
-    whenAst: whenIdentifier("terminalWorkspaceOpen"),
-  },
-  {
-    shortcut: modShortcut("1"),
-    command: "terminal.workspace.terminal",
-    whenAst: whenIdentifier("terminalWorkspaceOpen"),
-  },
-  {
-    shortcut: modShortcut("2"),
-    command: "terminal.workspace.chat",
-    whenAst: whenIdentifier("terminalWorkspaceOpen"),
-  },
-  {
     shortcut: modShortcut("d"),
     command: "diff.toggle",
     whenAst: whenNot(whenIdentifier("terminalFocus")),
@@ -186,74 +167,47 @@ const DEFAULT_BINDINGS = compile([
   {
     shortcut: modShortcut("1"),
     command: "thread.jump.1",
-    whenAst: whenAnd(
-      whenNot(whenIdentifier("terminalFocus")),
-      whenNot(whenIdentifier("terminalWorkspaceOpen")),
-    ),
+    whenAst: whenNot(whenIdentifier("terminalFocus")),
   },
   {
     shortcut: modShortcut("2"),
     command: "thread.jump.2",
-    whenAst: whenAnd(
-      whenNot(whenIdentifier("terminalFocus")),
-      whenNot(whenIdentifier("terminalWorkspaceOpen")),
-    ),
+    whenAst: whenNot(whenIdentifier("terminalFocus")),
   },
   {
     shortcut: modShortcut("3"),
     command: "thread.jump.3",
-    whenAst: whenAnd(
-      whenNot(whenIdentifier("terminalFocus")),
-      whenNot(whenIdentifier("terminalWorkspaceOpen")),
-    ),
+    whenAst: whenNot(whenIdentifier("terminalFocus")),
   },
   {
     shortcut: modShortcut("4"),
     command: "thread.jump.4",
-    whenAst: whenAnd(
-      whenNot(whenIdentifier("terminalFocus")),
-      whenNot(whenIdentifier("terminalWorkspaceOpen")),
-    ),
+    whenAst: whenNot(whenIdentifier("terminalFocus")),
   },
   {
     shortcut: modShortcut("5"),
     command: "thread.jump.5",
-    whenAst: whenAnd(
-      whenNot(whenIdentifier("terminalFocus")),
-      whenNot(whenIdentifier("terminalWorkspaceOpen")),
-    ),
+    whenAst: whenNot(whenIdentifier("terminalFocus")),
   },
   {
     shortcut: modShortcut("6"),
     command: "thread.jump.6",
-    whenAst: whenAnd(
-      whenNot(whenIdentifier("terminalFocus")),
-      whenNot(whenIdentifier("terminalWorkspaceOpen")),
-    ),
+    whenAst: whenNot(whenIdentifier("terminalFocus")),
   },
   {
     shortcut: modShortcut("7"),
     command: "thread.jump.7",
-    whenAst: whenAnd(
-      whenNot(whenIdentifier("terminalFocus")),
-      whenNot(whenIdentifier("terminalWorkspaceOpen")),
-    ),
+    whenAst: whenNot(whenIdentifier("terminalFocus")),
   },
   {
     shortcut: modShortcut("8"),
     command: "thread.jump.8",
-    whenAst: whenAnd(
-      whenNot(whenIdentifier("terminalFocus")),
-      whenNot(whenIdentifier("terminalWorkspaceOpen")),
-    ),
+    whenAst: whenNot(whenIdentifier("terminalFocus")),
   },
   {
     shortcut: modShortcut("9"),
     command: "thread.jump.9",
-    whenAst: whenAnd(
-      whenNot(whenIdentifier("terminalFocus")),
-      whenNot(whenIdentifier("terminalWorkspaceOpen")),
-    ),
+    whenAst: whenNot(whenIdentifier("terminalFocus")),
   },
   {
     shortcut: modShortcut("]", { shiftKey: true }),
@@ -372,10 +326,10 @@ describe("split/new/close terminal shortcuts", () => {
         DEFAULT_BINDINGS,
         {
           platform: "Win32",
-          context: { terminalWorkspaceOpen: true },
+          context: { terminalFocus: false },
         },
       ),
-      "terminal.workspace.terminal",
+      "thread.jump.1",
     );
   });
 
@@ -434,23 +388,13 @@ describe("thread jump shortcuts", () => {
     assert.isNull(threadJumpIndexFromCommand("chat.new"));
   });
 
-  it("resolves numbered thread jumps when the terminal workspace is closed", () => {
+  it("resolves numbered thread jumps when terminal focus is outside the terminal", () => {
     assert.strictEqual(
       resolveShortcutCommand(event({ key: "3", metaKey: true }), DEFAULT_BINDINGS, {
         platform: "MacIntel",
-        context: { terminalFocus: false, terminalWorkspaceOpen: false },
+        context: { terminalFocus: false },
       }),
       "thread.jump.3",
-    );
-  });
-
-  it("preserves terminal workspace shortcuts when the workspace is open", () => {
-    assert.strictEqual(
-      resolveShortcutCommand(event({ key: "1", metaKey: true }), DEFAULT_BINDINGS, {
-        platform: "MacIntel",
-        context: { terminalFocus: false, terminalWorkspaceOpen: true },
-      }),
-      "terminal.workspace.terminal",
     );
   });
 
@@ -458,106 +402,20 @@ describe("thread jump shortcuts", () => {
     assert.isTrue(
       shouldShowThreadJumpHints(event({ key: "Meta", metaKey: true }), DEFAULT_BINDINGS, {
         platform: "MacIntel",
-        context: { terminalWorkspaceOpen: false },
+        context: { terminalFocus: false },
       }),
     );
     assert.isTrue(
       shouldShowThreadJumpHints(event({ key: "Control", ctrlKey: true }), DEFAULT_BINDINGS, {
         platform: "Linux",
-        context: { terminalWorkspaceOpen: false },
+        context: { terminalFocus: false },
       }),
     );
     assert.isFalse(
       shouldShowThreadJumpHints(event({ key: "Meta", metaKey: true }), DEFAULT_BINDINGS, {
         platform: "MacIntel",
-        context: { terminalWorkspaceOpen: true },
+        context: { terminalFocus: true },
       }),
-    );
-  });
-});
-
-describe("workspace terminal tab shortcuts", () => {
-  it("resolves the full-width terminal shortcut", () => {
-    assert.strictEqual(
-      resolveShortcutCommand(event({ key: "j", metaKey: true, shiftKey: true }), DEFAULT_BINDINGS, {
-        platform: "MacIntel",
-      }),
-      "terminal.workspace.newFullWidth",
-    );
-  });
-
-  it("resolves the active workspace close shortcut only while the terminal workspace is open", () => {
-    assert.strictEqual(
-      resolveShortcutCommand(event({ key: "w", metaKey: true }), DEFAULT_BINDINGS, {
-        platform: "MacIntel",
-        context: { terminalWorkspaceOpen: true, terminalFocus: true },
-      }),
-      "terminal.workspace.closeActive",
-    );
-    assert.isNull(
-      resolveShortcutCommand(event({ key: "w", metaKey: true }), DEFAULT_BINDINGS, {
-        platform: "MacIntel",
-        context: { terminalWorkspaceOpen: false, terminalFocus: false },
-      }),
-    );
-  });
-
-  it("prefers workspace tab shortcuts while open and thread jumps otherwise", () => {
-    assert.strictEqual(
-      resolveShortcutCommand(event({ key: "1", metaKey: true }), DEFAULT_BINDINGS, {
-        platform: "MacIntel",
-        context: { terminalWorkspaceOpen: true },
-      }),
-      "terminal.workspace.terminal",
-    );
-    assert.strictEqual(
-      resolveShortcutCommand(event({ key: "2", ctrlKey: true }), DEFAULT_BINDINGS, {
-        platform: "Linux",
-        context: { terminalWorkspaceOpen: true },
-      }),
-      "terminal.workspace.chat",
-    );
-    assert.strictEqual(
-      resolveShortcutCommand(event({ key: "1", metaKey: true }), DEFAULT_BINDINGS, {
-        platform: "MacIntel",
-        context: { terminalWorkspaceOpen: false },
-      }),
-      "thread.jump.1",
-    );
-  });
-
-  it("falls back to workspace defaults when the runtime config is missing them", () => {
-    const legacyBindings = DEFAULT_BINDINGS.filter(
-      (binding) =>
-        binding.command !== "terminal.workspace.newFullWidth" &&
-        binding.command !== "terminal.workspace.closeActive" &&
-        binding.command !== "terminal.workspace.terminal" &&
-        binding.command !== "terminal.workspace.chat",
-    );
-
-    assert.strictEqual(
-      resolveShortcutCommand(event({ key: "j", metaKey: true, shiftKey: true }), legacyBindings, {
-        platform: "MacIntel",
-      }),
-      "terminal.workspace.newFullWidth",
-    );
-    assert.strictEqual(
-      resolveShortcutCommand(event({ key: "w", metaKey: true }), legacyBindings, {
-        platform: "MacIntel",
-        context: { terminalWorkspaceOpen: true },
-      }),
-      "terminal.workspace.closeActive",
-    );
-    assert.strictEqual(
-      resolveShortcutCommand(event({ key: "1", metaKey: true }), legacyBindings, {
-        platform: "MacIntel",
-        context: { terminalWorkspaceOpen: true },
-      }),
-      "terminal.workspace.terminal",
-    );
-    assert.strictEqual(
-      shortcutLabelForCommand(legacyBindings, "terminal.workspace.chat", "Linux"),
-      "Ctrl+2",
     );
   });
 });
@@ -635,18 +493,6 @@ describe("shortcutLabelForCommand", () => {
     assert.strictEqual(
       shortcutLabelForCommand(DEFAULT_BINDINGS, "browser.toggle", "MacIntel"),
       "⇧⌘B",
-    );
-    assert.strictEqual(
-      shortcutLabelForCommand(DEFAULT_BINDINGS, "terminal.workspace.terminal", "MacIntel"),
-      "⌘1",
-    );
-    assert.strictEqual(
-      shortcutLabelForCommand(DEFAULT_BINDINGS, "terminal.workspace.newFullWidth", "MacIntel"),
-      "⇧⌘J",
-    );
-    assert.strictEqual(
-      shortcutLabelForCommand(DEFAULT_BINDINGS, "terminal.workspace.chat", "Linux"),
-      "Ctrl+2",
     );
     assert.strictEqual(
       shortcutLabelForCommand(DEFAULT_BINDINGS, "chat.visible.next", "MacIntel"),

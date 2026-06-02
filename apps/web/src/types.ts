@@ -32,9 +32,7 @@ export const DEFAULT_INTERACTION_MODE: ProviderInteractionMode = "default";
 export const DEFAULT_THREAD_TERMINAL_HEIGHT = 280;
 export const DEFAULT_THREAD_TERMINAL_ID = "default";
 export const MAX_TERMINALS_PER_GROUP = 6;
-export type ThreadTerminalPresentationMode = "drawer" | "workspace";
-export type ThreadTerminalWorkspaceTab = "terminal" | "chat";
-export type ThreadTerminalWorkspaceLayout = "both" | "terminal-only";
+export type ThreadTerminalPresentationMode = "drawer";
 export type ThreadPrimarySurface = "chat" | "terminal";
 export type ProjectScript = ContractProjectScript;
 

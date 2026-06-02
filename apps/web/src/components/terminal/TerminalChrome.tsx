@@ -5,10 +5,7 @@
 
 import type { ReactNode } from "react";
 
-import type {
-  ResolvedTerminalVisualIdentity,
-  TerminalVisualState,
-} from "@t3tools/shared/terminalThreads";
+import type { ResolvedTerminalVisualIdentity } from "@t3tools/shared/terminalThreads";
 
 import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 import { XIcon } from "~/lib/icons";
@@ -17,19 +14,6 @@ import { cn } from "~/lib/utils";
 import type { ResolvedTerminalGroupLayout } from "./TerminalLayout";
 import TerminalActivityIndicator from "./TerminalActivityIndicator";
 import TerminalIdentityIcon from "./TerminalIdentityIcon";
-
-function terminalVisualStatePriority(state: TerminalVisualState): number {
-  switch (state) {
-    case "attention":
-      return 4;
-    case "running":
-      return 3;
-    case "review":
-      return 2;
-    case "idle":
-      return 1;
-  }
-}
 
 export interface TerminalChromeActionItem {
   disabled?: boolean;
@@ -69,14 +53,12 @@ function TerminalActionButton({ label, className, onClick, children }: TerminalA
 
 export function TerminalChromeActions(props: {
   actions: ReadonlyArray<TerminalChromeActionItem>;
-  variant: "compact" | "workspace" | "sidebar";
+  variant: "compact" | "sidebar";
 }) {
   const itemClassName =
-    props.variant === "workspace"
-      ? "inline-flex h-full items-center bg-background px-2 text-foreground/90 transition-colors hover:bg-[var(--sidebar-accent)]"
-      : props.variant === "sidebar"
-        ? "inline-flex h-full items-center bg-background px-1 text-foreground/90 transition-colors hover:bg-[var(--sidebar-accent)]"
-        : "bg-background p-1 text-foreground/90 transition-colors hover:bg-[var(--sidebar-accent)]";
+    props.variant === "sidebar"
+      ? "inline-flex h-full items-center bg-background px-1 text-foreground/90 transition-colors hover:bg-[var(--sidebar-accent)]"
+      : "bg-background p-1 text-foreground/90 transition-colors hover:bg-[var(--sidebar-accent)]";
 
   return (
     <div
@@ -90,12 +72,11 @@ export function TerminalChromeActions(props: {
       {props.actions.map((action, index) => {
         const shouldRenderDivider = props.variant === "compact" && index > 0;
         return (
-          <div key={action.label} className={cn(props.variant === "workspace" ? "" : "contents")}>
+          <div key={action.label} className="contents">
             {shouldRenderDivider ? <div className="h-4 w-px bg-border/80" /> : null}
             <TerminalActionButton
               className={cn(
                 itemClassName,
-                props.variant === "workspace" && index > 0 ? "border-l border-border/70" : "",
                 props.variant === "sidebar" && index > 0 ? "border-l border-border/70" : "",
                 action.disabled ? "cursor-not-allowed opacity-45 hover:bg-transparent" : "",
               )}
@@ -110,93 +91,6 @@ export function TerminalChromeActions(props: {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-export function TerminalWorkspaceTabBar(props: {
-  terminalGroups: ResolvedTerminalGroupLayout[];
-  activeGroupId: string;
-  terminalVisualIdentityById: ReadonlyMap<string, ResolvedTerminalVisualIdentity>;
-  actions: ReadonlyArray<TerminalChromeActionItem>;
-  onActiveGroupChange: (groupId: string) => void;
-  onCloseGroup: (groupId: string) => void;
-}) {
-  return (
-    <div className="flex min-w-0 items-stretch justify-between bg-background">
-      <div className="flex min-w-0 items-stretch overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {props.terminalGroups.map((terminalGroup) => {
-          const isActive = terminalGroup.id === props.activeGroupId;
-          const previewTerminalId =
-            terminalGroup.terminalIds.reduce<string | null>((bestTerminalId, terminalId) => {
-              const bestPriority = terminalVisualStatePriority(
-                props.terminalVisualIdentityById.get(
-                  bestTerminalId ?? terminalGroup.activeTerminalId,
-                )?.state ?? "idle",
-              );
-              const nextPriority = terminalVisualStatePriority(
-                props.terminalVisualIdentityById.get(terminalId)?.state ?? "idle",
-              );
-              return nextPriority > bestPriority ? terminalId : bestTerminalId;
-            }, null) ?? terminalGroup.activeTerminalId;
-          const visualIdentity = props.terminalVisualIdentityById.get(previewTerminalId);
-          const closeTabLabel = `Close ${visualIdentity?.title ?? "Terminal tab"}`;
-          return (
-            <div
-              key={terminalGroup.id}
-              className={cn(
-                "group relative flex h-8 shrink-0 items-center gap-2 border-r border-border/70 px-2.5 transition-colors first:border-l first:border-l-border/70",
-                isActive
-                  ? "shadow-[inset_0_1px_0_var(--color-text-foreground)] bg-background text-foreground"
-                  : "border-b border-border/70 bg-transparent text-muted-foreground hover:bg-[var(--sidebar-accent)] hover:text-foreground",
-              )}
-            >
-              <button
-                type="button"
-                className="flex min-w-0 items-center gap-2 text-left"
-                onClick={() => props.onActiveGroupChange(terminalGroup.id)}
-              >
-                <TerminalIdentityIcon
-                  className="size-3 shrink-0"
-                  iconKey={visualIdentity?.iconKey ?? "terminal"}
-                />
-                {visualIdentity && visualIdentity.state !== "idle" ? (
-                  <TerminalActivityIndicator
-                    className="text-foreground/70"
-                    state={visualIdentity.state}
-                  />
-                ) : null}
-                <span className="truncate text-[12px] leading-4 text-current/90">
-                  {visualIdentity?.title ?? "Terminal"}
-                </span>
-                {terminalGroup.terminalIds.length > 1 ? (
-                  <span className="shrink-0 text-[10px] text-current/55">
-                    {terminalGroup.terminalIds.length}
-                  </span>
-                ) : null}
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  "inline-flex size-4 shrink-0 items-center justify-center text-muted-foreground/80 transition hover:bg-background/55 hover:text-foreground",
-                  props.terminalGroups.length <= 1 ? "hidden" : "",
-                )}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  props.onCloseGroup(terminalGroup.id);
-                }}
-                aria-label={closeTabLabel}
-              >
-                <XIcon className="size-2.75" />
-              </button>
-            </div>
-          );
-        })}
-        <div className="min-w-0 flex-1 border-b border-border/70" />
-      </div>
-      <div className="shrink-0 border-b border-l border-border/70">
-        <TerminalChromeActions actions={props.actions} variant="workspace" />
-      </div>
     </div>
   );
 }

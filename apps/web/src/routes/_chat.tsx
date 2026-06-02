@@ -9,7 +9,6 @@ import {
   resolveAppNavigationState,
 } from "../appNavigation";
 import ShortcutsDialog from "../components/ShortcutsDialog";
-import { shouldRenderTerminalWorkspace } from "../components/ChatView.logic";
 import ThreadSidebar from "../components/Sidebar";
 import { isElectron } from "../env";
 import { useHandleNewChat } from "../hooks/useHandleNewChat";
@@ -232,11 +231,6 @@ function ChatRouteGlobalShortcuts() {
       ? (projects.find((project) => project.id === activeProjectId) ?? null)
       : null;
   const activeProjectScripts = activeProject?.kind === "project" ? activeProject.scripts : [];
-  const terminalWorkspaceOpen = shouldRenderTerminalWorkspace({
-    activeProjectExists: activeProject !== null,
-    presentationMode: activeThreadTerminalState?.presentationMode ?? "drawer",
-    terminalOpen,
-  });
   const currentProjectId = resolveCurrentProjectTargetId(projects, activeProject?.id ?? null);
   const latestUsableProjectId = resolveLatestProjectTargetId(projects, latestProjectId);
 
@@ -259,7 +253,6 @@ function ChatRouteGlobalShortcuts() {
       const shortcutContext = {
         terminalFocus: isTerminalFocused(),
         terminalOpen,
-        terminalWorkspaceOpen,
       };
 
       const isShortcutsHelpShortcut =
@@ -434,7 +427,6 @@ function ChatRouteGlobalShortcuts() {
     projects,
     selectedThreadIdsSize,
     terminalOpen,
-    terminalWorkspaceOpen,
     toggleSidebar,
   ]);
 
@@ -468,7 +460,6 @@ function ChatRouteGlobalShortcuts() {
       context={{
         terminalFocus: isTerminalFocused(),
         terminalOpen,
-        terminalWorkspaceOpen,
       }}
       isElectron={isElectron}
     />

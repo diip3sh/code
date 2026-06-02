@@ -1226,7 +1226,7 @@ export default function DiffPanel({
                   {repoDiffError}
                 </div>
               ) : hasNoRepoChanges ? (
-                <div className="flex h-full items-center justify-center px-5 text-center text-xs text-muted-foreground/70">
+                <div className="flex h-full items-center justify-center px-5 text-center text-xs text-muted-foreground/70 font-sans">
                   No changes in the selected diff source.
                 </div>
               ) : diffSummaryQuery.isLoading ? (

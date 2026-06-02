@@ -168,7 +168,6 @@ import {
 import { useStore } from "../store";
 import { RenameThreadDialog } from "./RenameThreadDialog";
 import { getThreadFromState } from "../threadDerivation";
-import { useWorkspaceStore } from "../workspaceStore";
 import {
   buildPlanImplementationThreadTitle,
   buildPlanImplementationPrompt,
@@ -197,7 +196,6 @@ import {
   shortcutLabelForCommand,
 } from "../keybindings";
 import PlanSidebar from "./PlanSidebar";
-import TerminalWorkspaceTabs from "./TerminalWorkspaceTabs";
 import ThreadTerminalDrawer from "./ThreadTerminalDrawer";
 import {
   ChevronDownIcon,
@@ -339,7 +337,6 @@ import {
   buildLocalDraftThread,
   DISMISSED_PROVIDER_HEALTH_BANNERS_KEY,
   DismissedProviderHealthBannersSchema,
-  shouldRenderTerminalWorkspace,
   cloneComposerImageForRetry,
   collectUserMessageBlobPreviewUrls,
   createLocalDispatchSnapshot,
@@ -1072,11 +1069,7 @@ export default function ChatView({
   const storeSetTerminalPresentationMode = useTerminalStateStore(
     (s) => s.setTerminalPresentationMode,
   );
-  const storeSetTerminalWorkspaceLayout = useTerminalStateStore(
-    (s) => s.setTerminalWorkspaceLayout,
-  );
   const storeOpenTerminalThreadPage = useTerminalStateStore((s) => s.openTerminalThreadPage);
-  const storeSetTerminalWorkspaceTab = useTerminalStateStore((s) => s.setTerminalWorkspaceTab);
   const storeSetTerminalHeight = useTerminalStateStore((s) => s.setTerminalHeight);
   const storeSetTerminalMetadata = useTerminalStateStore((s) => s.setTerminalMetadata);
   const storeSetTerminalActivity = useTerminalStateStore((s) => s.setTerminalActivity);
@@ -1086,11 +1079,8 @@ export default function ChatView({
   const storeSplitTerminalUp = useTerminalStateStore((s) => s.splitTerminalUp);
   const storeNewTerminal = useTerminalStateStore((s) => s.newTerminal);
   const storeNewTerminalTab = useTerminalStateStore((s) => s.newTerminalTab);
-  const storeOpenNewFullWidthTerminal = useTerminalStateStore((s) => s.openNewFullWidthTerminal);
-  const storeCloseWorkspaceChat = useTerminalStateStore((s) => s.closeWorkspaceChat);
   const storeSetActiveTerminal = useTerminalStateStore((s) => s.setActiveTerminal);
   const storeCloseTerminal = useTerminalStateStore((s) => s.closeTerminal);
-  const storeCloseTerminalGroup = useTerminalStateStore((s) => s.closeTerminalGroup);
   const storeResizeTerminalSplit = useTerminalStateStore((s) => s.resizeTerminalSplit);
   const storeClearTerminalState = useTerminalStateStore((s) => s.clearTerminalState);
 
@@ -1221,7 +1211,8 @@ export default function ChatView({
   const activeProject = useStore(
     useMemo(() => createProjectSelector(activeProjectId), [activeProjectId]),
   );
-  const homeDir = useWorkspaceStore((state) => state.homeDir);
+  const serverConfigQuery = useQuery(serverConfigQueryOptions());
+  const homeDir = serverConfigQuery.data?.homeDir ?? null;
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const isHomeChatContainer = isHomeChatContainerProject(activeProject, homeDir);
   const activeProjectDisplayName = isHomeChatContainer
@@ -2367,7 +2358,6 @@ export default function ChatView({
   const isMentionTrigger = composerTriggerKind === "mention";
   const platform = typeof navigator === "undefined" ? "" : navigator.platform;
   const branchesQuery = useQuery(gitBranchesQueryOptions(gitBranchSourceCwd));
-  const serverConfigQuery = useQuery(serverConfigQueryOptions());
   const localFolderBrowseRootPath = getLocalFolderBrowseRootPath(
     serverConfigQuery.data?.homeDir ?? null,
     isMacPlatform(platform),
@@ -2826,10 +2816,6 @@ export default function ChatView({
     () => shortcutLabelForCommand(keybindings, "terminal.close"),
     [keybindings],
   );
-  const closeWorkspaceShortcutLabel = useMemo(
-    () => shortcutLabelForCommand(keybindings, "terminal.workspace.closeActive"),
-    [keybindings],
-  );
   const diffPanelShortcutLabel = useMemo(
     () => shortcutLabelForCommand(keybindings, "diff.toggle"),
     [keybindings],
@@ -2921,18 +2907,8 @@ export default function ChatView({
   const hasReachedSplitLimit =
     (activeTerminalGroup ? collectTerminalIdsFromLayout(activeTerminalGroup.layout).length : 0) >=
     MAX_TERMINALS_PER_GROUP;
-  const terminalWorkspaceOpen = shouldRenderTerminalWorkspace({
-    activeProjectExists: activeProject !== undefined,
-    presentationMode: terminalState.presentationMode,
-    terminalOpen: terminalState.terminalOpen,
-  });
-  const terminalWorkspaceTerminalTabActive =
-    terminalWorkspaceOpen &&
-    (terminalState.workspaceLayout === "terminal-only" ||
-      terminalState.workspaceActiveTab === "terminal");
   const secondaryChromeThreadId = activeThread?.id ?? threadId;
-  const shouldDeferSecondaryChrome =
-    activeThread !== undefined && !isCenteredEmptyLanding && !terminalWorkspaceTerminalTabActive;
+  const shouldDeferSecondaryChrome = activeThread !== undefined && !isCenteredEmptyLanding;
   const [secondaryChromeState, setSecondaryChromeState] = useState(() => ({
     threadId: secondaryChromeThreadId,
     ready: true,
@@ -2965,10 +2941,6 @@ export default function ChatView({
       window.cancelAnimationFrame(frame);
     };
   }, [secondaryChromeThreadId, shouldDeferSecondaryChrome]);
-  const terminalWorkspaceChatTabActive =
-    terminalWorkspaceOpen &&
-    terminalState.workspaceLayout === "both" &&
-    terminalState.workspaceActiveTab === "chat";
   const setThreadError = useCallback(
     (targetThreadId: ThreadId | null, error: string | null) => {
       if (!targetThreadId) return;
@@ -3092,25 +3064,11 @@ export default function ChatView({
     [activeThreadId, storeSetTerminalOpen],
   );
   const setTerminalPresentationMode = useCallback(
-    (mode: "drawer" | "workspace") => {
+    (mode: "drawer") => {
       if (!activeThreadId) return;
       storeSetTerminalPresentationMode(activeThreadId, mode);
     },
     [activeThreadId, storeSetTerminalPresentationMode],
-  );
-  const setTerminalWorkspaceLayout = useCallback(
-    (layout: "both" | "terminal-only") => {
-      if (!activeThreadId) return;
-      storeSetTerminalWorkspaceLayout(activeThreadId, layout);
-    },
-    [activeThreadId, storeSetTerminalWorkspaceLayout],
-  );
-  const setTerminalWorkspaceTab = useCallback(
-    (tab: "terminal" | "chat") => {
-      if (!activeThreadId) return;
-      storeSetTerminalWorkspaceTab(activeThreadId, tab);
-    },
-    [activeThreadId, storeSetTerminalWorkspaceTab],
   );
   const setTerminalHeight = useCallback(
     (height: number) => {
@@ -3126,21 +3084,6 @@ export default function ChatView({
     }
     setTerminalOpen(!terminalState.terminalOpen);
   }, [activeThreadId, setTerminalOpen, setTerminalPresentationMode, terminalState.terminalOpen]);
-  const expandTerminalWorkspace = useCallback(() => {
-    if (!activeThreadId) return;
-    setTerminalPresentationMode("workspace");
-    setTerminalWorkspaceLayout("both");
-    setTerminalWorkspaceTab("terminal");
-  }, [
-    activeThreadId,
-    setTerminalPresentationMode,
-    setTerminalWorkspaceLayout,
-    setTerminalWorkspaceTab,
-  ]);
-  const collapseTerminalWorkspace = useCallback(() => {
-    if (!activeThreadId) return;
-    setTerminalPresentationMode("drawer");
-  }, [activeThreadId, setTerminalPresentationMode]);
   const splitTerminalRight = useCallback(() => {
     if (!activeThreadId || hasReachedSplitLimit) return;
     const terminalId = `terminal-${randomUUID()}`;
@@ -3206,20 +3149,6 @@ export default function ChatView({
     terminalState.terminalGroups,
     terminalState.terminalOpen,
   ]);
-  const moveTerminalToNewGroup = useCallback(
-    (terminalId: string) => {
-      if (!activeThreadId) return;
-      storeNewTerminal(activeThreadId, terminalId);
-      setTerminalFocusRequestId((value) => value + 1);
-    },
-    [activeThreadId, storeNewTerminal],
-  );
-  const openNewFullWidthTerminal = useCallback(() => {
-    if (!activeThreadId || !activeProject) return;
-    const terminalId = `terminal-${randomUUID()}`;
-    storeOpenNewFullWidthTerminal(activeThreadId, terminalId);
-    setTerminalFocusRequestId((value) => value + 1);
-  }, [activeProject, activeThreadId, storeOpenNewFullWidthTerminal]);
   // Desktop accelerators like Cmd+T can be claimed by Electron before the page sees keydown.
   useEffect(() => {
     const onMenuAction = window.desktopBridge?.onMenuAction;
@@ -3348,24 +3277,6 @@ export default function ChatView({
       terminalState.terminalTitleOverridesById,
     ],
   );
-  const closeActiveWorkspaceView = useCallback(() => {
-    if (!activeThreadId || !terminalWorkspaceOpen) {
-      return;
-    }
-    if (terminalState.workspaceLayout === "both" && terminalState.workspaceActiveTab === "chat") {
-      storeCloseWorkspaceChat(activeThreadId);
-      return;
-    }
-    closeTerminal(terminalState.activeTerminalId);
-  }, [
-    activeThreadId,
-    closeTerminal,
-    storeCloseWorkspaceChat,
-    terminalState.activeTerminalId,
-    terminalState.workspaceActiveTab,
-    terminalState.workspaceLayout,
-    terminalWorkspaceOpen,
-  ]);
   const terminalDrawerProps = useMemo(
     () => ({
       threadId,
@@ -3386,18 +3297,12 @@ export default function ChatView({
       onSplitTerminalDown: splitTerminalDown,
       onNewTerminal: createNewTerminal,
       onNewTerminalTab: createNewTerminalTab,
-      onMoveTerminalToGroup: moveTerminalToNewGroup,
       splitShortcutLabel: splitTerminalShortcutLabel ?? undefined,
       splitDownShortcutLabel: splitTerminalDownShortcutLabel ?? undefined,
       newShortcutLabel: newTerminalShortcutLabel ?? undefined,
       closeShortcutLabel: closeTerminalShortcutLabel ?? undefined,
-      workspaceCloseShortcutLabel: closeWorkspaceShortcutLabel ?? undefined,
       onActiveTerminalChange: activateTerminal,
       onCloseTerminal: closeTerminal,
-      onCloseTerminalGroup: (groupId: string) => {
-        if (!activeThreadId) return;
-        storeCloseTerminalGroup(activeThreadId, groupId);
-      },
       onHeightChange: setTerminalHeight,
       onResizeTerminalSplit: (groupId: string, splitId: string, weights: number[]) => {
         if (!activeThreadId) return;
@@ -3428,10 +3333,8 @@ export default function ChatView({
       addTerminalContextToDraft,
       closeTerminal,
       closeTerminalShortcutLabel,
-      closeWorkspaceShortcutLabel,
       createNewTerminal,
       createNewTerminalTab,
-      moveTerminalToNewGroup,
       gitCwd,
       activeThreadId,
       newTerminalShortcutLabel,
@@ -3440,7 +3343,6 @@ export default function ChatView({
       splitTerminalDown,
       splitTerminalShortcutLabel,
       splitTerminalDownShortcutLabel,
-      storeCloseTerminalGroup,
       storeResizeTerminalSplit,
       storeSetTerminalActivity,
       storeSetTerminalMetadata,
@@ -4443,24 +4345,6 @@ export default function ChatView({
     storeOpenTerminalThreadPage(activeThreadId);
   }, [activeThreadId, storeOpenTerminalThreadPage, terminalState.entryPoint]);
 
-  useEffect(() => {
-    if (!terminalWorkspaceOpen) {
-      return;
-    }
-
-    if (terminalState.workspaceActiveTab === "terminal") {
-      setTerminalFocusRequestId((value) => value + 1);
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      focusComposer();
-    });
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
-  }, [focusComposer, terminalState.workspaceActiveTab, terminalWorkspaceOpen]);
-
   const onInterrupt = useCallback(async () => {
     const api = readNativeApi();
     if (!api || !activeThread) return;
@@ -4528,10 +4412,6 @@ export default function ChatView({
       const shortcutContext = {
         terminalFocus: isTerminalFocused(),
         terminalOpen: Boolean(terminalState.terminalOpen),
-        terminalWorkspaceOpen,
-        terminalWorkspaceTerminalOnly: terminalState.workspaceLayout === "terminal-only",
-        terminalWorkspaceTerminalTabActive,
-        terminalWorkspaceChatTabActive,
       };
 
       const command = resolveShortcutCommand(event, keybindings, {
@@ -4601,36 +4481,6 @@ export default function ChatView({
         return;
       }
 
-      if (command === "terminal.workspace.newFullWidth") {
-        event.preventDefault();
-        event.stopPropagation();
-        openNewFullWidthTerminal();
-        return;
-      }
-
-      if (command === "terminal.workspace.closeActive") {
-        event.preventDefault();
-        event.stopPropagation();
-        closeActiveWorkspaceView();
-        return;
-      }
-
-      if (command === "terminal.workspace.terminal") {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!terminalWorkspaceOpen) return;
-        setTerminalWorkspaceTab("terminal");
-        return;
-      }
-
-      if (command === "terminal.workspace.chat") {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!terminalWorkspaceOpen) return;
-        setTerminalWorkspaceTab("chat");
-        return;
-      }
-
       if (command === "diff.toggle") {
         event.preventDefault();
         event.stopPropagation();
@@ -4669,22 +4519,16 @@ export default function ChatView({
     activeProject,
     terminalState.terminalOpen,
     terminalState.activeTerminalId,
-    terminalState.workspaceLayout,
     activeThreadId,
     closeTerminal,
-    closeActiveWorkspaceView,
     createTerminalFromShortcut,
     setTerminalOpen,
-    openNewFullWidthTerminal,
     runProjectScript,
     keybindings,
     splitTerminalDown,
     splitTerminalLeft,
     splitTerminalRight,
     splitTerminalUp,
-    terminalWorkspaceChatTabActive,
-    terminalWorkspaceOpen,
-    terminalWorkspaceTerminalTabActive,
     onToggleBrowser,
     onToggleDiff,
     onInterrupt,
@@ -4696,7 +4540,6 @@ export default function ChatView({
     isComposerApprovalState,
     isVoiceRecording,
     isVoiceTranscribing,
-    setTerminalWorkspaceTab,
     surfaceMode,
     scheduleComposerFocus,
     toggleTerminalVisibility,
@@ -8007,7 +7850,7 @@ export default function ChatView({
           activeProjectName={activeProjectDisplayName}
           threadBreadcrumbs={threadBreadcrumbs}
           isSidechat={Boolean(activeThread.sidechatSourceThreadId)}
-          hideHandoffControls={terminalWorkspaceTerminalTabActive}
+          hideHandoffControls={false}
           isGitRepo={isGitRepo}
           openInCwd={threadWorkspaceCwd}
           activeProjectScripts={activeProjectScripts}
@@ -8090,27 +7933,11 @@ export default function ChatView({
         rateLimitStatus={visibleActiveRateLimitStatus}
         onDismiss={dismissActiveRateLimitBanner}
       />
-      {terminalWorkspaceOpen ? (
-        <TerminalWorkspaceTabs
-          activeTab={terminalState.workspaceActiveTab}
-          isWorking={isWorking}
-          terminalHasRunningActivity={terminalState.runningTerminalIds.length > 0}
-          terminalCount={terminalState.terminalIds.length}
-          workspaceLayout={terminalState.workspaceLayout}
-          onSelectTab={setTerminalWorkspaceTab}
-        />
-      ) : null}
       {/* Main content area with optional plan sidebar */}
       <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
         {/* Chat column */}
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div
-            aria-hidden={terminalWorkspaceTerminalTabActive}
-            className={cn(
-              "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
-              terminalWorkspaceTerminalTabActive ? "pointer-events-none invisible" : "",
-            )}
-          >
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             {isCenteredEmptyLanding ? (
               <div className="chat-pane-enter flex flex-1 items-center justify-center px-3 sm:px-5">
                 <div className="flex w-full max-w-3xl flex-col justify-center">
@@ -8175,7 +8002,6 @@ export default function ChatView({
                 timestampFormat={timestampFormat}
                 workspaceRoot={activeProject?.cwd ?? undefined}
                 emptyStateProjectName={activeProjectDisplayName}
-                terminalWorkspaceTerminalTabActive={terminalWorkspaceTerminalTabActive}
                 onMessagesScroll={onMessagesScroll}
                 onMessagesClickCapture={onMessagesClickCapture}
                 onMessagesMouseUp={onMessagesMouseUp}
@@ -8752,28 +8578,6 @@ export default function ChatView({
               />
             ) : null}
           </div>
-
-          {terminalWorkspaceOpen ? (
-            <div
-              aria-hidden={!terminalWorkspaceTerminalTabActive}
-              className={cn(
-                "absolute inset-0 min-h-0 min-w-0 transition-all duration-200 ease-out",
-                terminalWorkspaceTerminalTabActive
-                  ? "translate-y-0 opacity-100"
-                  : "pointer-events-none translate-y-1 opacity-0",
-              )}
-            >
-              <ThreadTerminalDrawer
-                key={`${activeThread.id}-workspace`}
-                {...terminalDrawerProps}
-                presentationMode="workspace"
-                isVisible={terminalWorkspaceTerminalTabActive}
-                onTogglePresentationMode={
-                  terminalState.workspaceLayout === "both" ? collapseTerminalWorkspace : undefined
-                }
-              />
-            </div>
-          ) : null}
         </div>
         {/* end chat column */}
 
@@ -8799,17 +8603,10 @@ export default function ChatView({
       {/* end horizontal flex container */}
 
       {(() => {
-        if (!terminalState.terminalOpen || !activeProject || terminalWorkspaceOpen) {
+        if (!terminalState.terminalOpen || !activeProject) {
           return null;
         }
-        return (
-          <ThreadTerminalDrawer
-            key={activeThread.id}
-            {...terminalDrawerProps}
-            presentationMode="drawer"
-            onTogglePresentationMode={expandTerminalWorkspace}
-          />
-        );
+        return <ThreadTerminalDrawer key={activeThread.id} {...terminalDrawerProps} />;
       })()}
 
       <ComposerSlashStatusDialog
