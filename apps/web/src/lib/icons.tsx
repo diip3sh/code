@@ -46,6 +46,7 @@ import {
   IconInfoCircle,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
+  IconLayoutSidebarRight,
   IconLayoutSidebarRightCollapse,
   IconLayoutDistributeHorizontal,
   IconListCheck,
@@ -202,6 +203,7 @@ export const MicIcon = adaptIcon(IconMicrophone);
 export const MinusIcon = adaptIcon(IconMinus);
 export const PanelLeftCloseIcon = adaptIcon(IconLayoutSidebarLeftCollapse);
 export const PanelLeftIcon = adaptIcon(IconLayoutSidebarLeftExpand);
+export const PanelRightIcon = adaptIcon(IconLayoutSidebarRight);
 export const PanelRightCloseIcon = adaptIcon(IconLayoutSidebarRightCollapse);
 export const PinIcon: LucideIcon = (props) => (
   <svg

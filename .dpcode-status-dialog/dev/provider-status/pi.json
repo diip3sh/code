@@ -1,0 +1,18 @@
+{
+  "provider": "pi",
+  "status": "ready",
+  "available": true,
+  "authStatus": "authenticated",
+  "version": "0.74.2",
+  "checkedAt": "2026-06-02T17:43:19.975Z",
+  "message": "Pi SDK is available with 10 authenticated models.",
+  "versionAdvisory": {
+    "status": "behind_latest",
+    "currentVersion": "0.74.2",
+    "latestVersion": "0.78.0",
+    "updateCommand": "pi update",
+    "canUpdate": true,
+    "checkedAt": "2026-06-02T17:43:33.500Z",
+    "message": "Install the update now or review provider settings."
+  }
+}

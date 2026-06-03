@@ -1,0 +1,17 @@
+{
+  "provider": "cursor",
+  "status": "error",
+  "available": false,
+  "authStatus": "unknown",
+  "checkedAt": "2026-06-02T17:43:19.967Z",
+  "message": "Cursor Agent CLI (`cursor-agent`) is not installed or not on PATH.",
+  "versionAdvisory": {
+    "status": "unknown",
+    "currentVersion": null,
+    "latestVersion": null,
+    "updateCommand": "cursor-agent update",
+    "canUpdate": true,
+    "checkedAt": "2026-06-02T17:43:19.967Z",
+    "message": null
+  }
+}

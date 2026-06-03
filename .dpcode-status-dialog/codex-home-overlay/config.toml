@@ -1,0 +1,249 @@
+model = "gpt-5.5"
+model_reasoning_effort = "low"
+personality = "pragmatic"
+
+notify = [
+  "/Users/dip3sh/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient",
+  "turn-ended",
+]
+
+[projects."/Users/dip3sh"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/main-dashboard-ulejra"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/viewmax"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/portfolio"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/kshetr"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/obsidian"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/diip3sh"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/1code"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/component-template"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/organisation-dashboard-ulejra"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/clone/viewmax"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/ulejra.com"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/ulejraai"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/fluid-navigation-menu"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/fluid-transition"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/ascii-logo"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/Codex/2026-05-03/inspect-install-this-for-me-https"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/audio-component"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/interfaze-technical-round"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/fund-token-dashboard"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/blink"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/itshover"]
+trust_level = "trusted"
+
+[projects."/Users/dip3sh/Documents/code"]
+trust_level = "trusted"
+
+[notice.model_migrations]
+"gpt-5.2-codex" = "gpt-5.4"
+"gpt-5.3-codex" = "gpt-5.4"
+
+[mcp_servers.chrome-devtools]
+command = "npx"
+args = ["chrome-devtools-mcp@latest"]
+enabled = true
+
+[mcp_servers.chrome-devtools.tools.take_snapshot]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools.tools.evaluate_script]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools.tools.press_key]
+approval_mode = "approve"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers.paper]
+enabled = true
+url = "http://127.0.0.1:29979/mcp"
+
+[mcp_servers.paper.tools.create_artboard]
+approval_mode = "approve"
+
+[mcp_servers.paper.tools.write_html]
+approval_mode = "approve"
+
+[mcp_servers.paper.tools.update_styles]
+approval_mode = "approve"
+
+[mcp_servers.pencil]
+command = "/Users/dip3sh/.pencil/mcp/cursor/out/mcp-server-darwin-arm64"
+args = ["--app", "cursor"]
+enabled = false
+
+[mcp_servers.mcp-unframer-co]
+command = "npx"
+args = [
+  "-y",
+  "mcp-remote@latest",
+  "https://mcp.unframer.co/mcp?id=fe5f2e826d7f0722e0c0f469488b018bca2ddd5459ccd132db4f5b01d3c57dfe&secret=nR7HtF1VWzFx09L3HqoBhVbSE5RDw921",
+]
+enabled = false
+
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/Codex.app/Contents/Resources/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = ""
+NODE_REPL_NODE_PATH = "/Applications/Codex.app/Contents/Resources/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/dip3sh/.codex"
+CODEX_HOME = "/Users/dip3sh/.codex"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "0b0d41e7a14a4903d2f95b0b3f427ed796b12c8edca2fa392a03df43997075ae"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+SKY_CUA_SERVICE_PATH = "/Users/dip3sh/.codex/plugins/cache/openai-bundled/computer-use/1.0.799/Codex Computer Use.app"
+CODEX_CLI_PATH = "/Applications/Codex.app/Contents/Resources/codex"
+
+[tui]
+theme = "monokai-extended-bright"
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."figma@openai-curated"]
+enabled = true
+
+[plugins."build-web-apps@openai-curated"]
+enabled = true
+
+[plugins."build-macos-apps@openai-curated"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."gmail@openai-curated"]
+enabled = true
+
+[plugins."google-calendar@openai-curated"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[marketplaces.openai-bundled]
+last_updated = "2026-06-02T07:40:07Z"
+source_type = "local"
+source = "/Users/dip3sh/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-06-01T18:15:58Z"
+source_type = "local"
+source = "/Users/dip3sh/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[features]
+chronicle = false
+js_repl = false
+
+[memories]
+no_memories_if_mcp_or_web_search = true
+
+[desktop]
+appearanceTheme = "system"
+appearanceLightCodeThemeId = "absolutely"
+appearanceDarkCodeThemeId = "codex"
+usePointerCursors = true
+preventSleepWhileRunning = true
+keepRemoteControlAwakeWhilePluggedIn = true
+appearanceDiffMarkerStyle = "symbols"
+
+[desktop.appearanceLightChromeTheme]
+accent = "#cc7d5e"
+contrast = 53
+ink = "#2d2d2b"
+opaqueWindows = false
+surface = "#f9f9f7"
+
+[desktop.appearanceLightChromeTheme.fonts]
+ui = "Inter"
+
+[desktop.appearanceLightChromeTheme.semanticColors]
+diffAdded = "#00c853"
+diffRemoved = "#ff5f38"
+skill = "#cc7d5e"
+
+[desktop.appearanceDarkChromeTheme]
+accent = "#0169cc"
+contrast = 50
+ink = "#fcfcfc"
+opaqueWindows = false
+surface = "#111111"
+
+[desktop.appearanceDarkChromeTheme.fonts]
+code = "Lilex"
+ui = "Inter"
+
+[desktop.appearanceDarkChromeTheme.semanticColors]
+diffAdded = "#00a240"
+diffRemoved = "#e02e2a"
+skill = "#b06dff"
+
+[desktop.open-in-target-preferences]
+global = "zed"
+
+[desktop.open-in-target-preferences.perPath]
+"/Users/dip3sh/Documents/main-dashboard-ulejra" = "zed"
+
+[plugins."dpcode-browser@local"]
+enabled = false

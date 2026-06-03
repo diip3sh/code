@@ -1,0 +1,17 @@
+{
+  "provider": "kilo",
+  "status": "error",
+  "available": false,
+  "authStatus": "unknown",
+  "checkedAt": "2026-06-02T17:43:19.972Z",
+  "message": "Kilo CLI (`kilo`) is not installed or not on PATH.",
+  "versionAdvisory": {
+    "status": "unknown",
+    "currentVersion": null,
+    "latestVersion": null,
+    "updateCommand": "kilo upgrade",
+    "canUpdate": true,
+    "checkedAt": "2026-06-02T17:43:19.972Z",
+    "message": null
+  }
+}

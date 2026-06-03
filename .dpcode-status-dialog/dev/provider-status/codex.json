@@ -1,0 +1,17 @@
+{
+  "provider": "codex",
+  "status": "ready",
+  "available": true,
+  "authStatus": "authenticated",
+  "version": "0.136.0",
+  "checkedAt": "2026-06-02T17:43:19.956Z",
+  "versionAdvisory": {
+    "status": "current",
+    "currentVersion": "0.136.0",
+    "latestVersion": "0.136.0",
+    "updateCommand": "brew upgrade --cask codex",
+    "canUpdate": true,
+    "checkedAt": "2026-06-02T17:43:33.224Z",
+    "message": null
+  }
+}

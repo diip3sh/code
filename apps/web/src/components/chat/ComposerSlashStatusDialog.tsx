@@ -1,5 +1,6 @@
 import type { ResolvedThreadWorkspaceState } from "@t3tools/shared/threadEnvironment";
 import type { ProviderInteractionMode } from "@t3tools/contracts";
+import type { ReactNode } from "react";
 import type { DraftThreadEnvMode } from "../../composerDraftStore";
 import {
   type ContextWindowSnapshot,
@@ -7,17 +8,43 @@ import {
   formatCostUsd,
 } from "../../lib/contextWindow";
 import type { RateLimitStatus } from "./RateLimitBanner";
-import { Button } from "../ui/button";
 import {
   Dialog,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogPanel,
   DialogPopup,
   DialogTitle,
 } from "../ui/dialog";
 import { ContextWindowMeter } from "./ContextWindowMeter";
+
+function StatusSection(props: { title: string; children: ReactNode; className?: string }) {
+  return (
+    <section className={props.className}>
+      <h3 className="mb-2 text-xs font-medium leading-none text-muted-foreground font-sans">
+        {props.title}
+      </h3>
+      {props.children}
+    </section>
+  );
+}
+
+function StatusField(props: { label: string; value: ReactNode; mono?: boolean }) {
+  return (
+    <div className="grid grid-cols-[5.75rem_minmax(0,1fr)] items-baseline gap-3 py-1">
+      <dt className="text-xs leading-5 text-muted-foreground">{props.label}</dt>
+      <dd
+        className={
+          props.mono
+            ? "min-w-0 font-mono text-[0.8125rem] leading-5 tabular-nums text-foreground"
+            : "min-w-0 truncate text-[0.8125rem] font-medium leading-5 text-foreground"
+        }
+      >
+        {props.value}
+      </dd>
+    </div>
+  );
+}
 
 function formatRateLimitMessage(rateLimitStatus: RateLimitStatus): string {
   const resetSuffix = rateLimitStatus.resetsAt
@@ -78,124 +105,97 @@ export function ComposerSlashStatusDialog(props: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup className="max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Session Status</DialogTitle>
-          <DialogDescription>
-            Runtime controls and local thread state for the active composer.
+      <DialogPopup className="max-w-[30rem] rounded-xl">
+        <DialogHeader className="gap-1 px-4 pb-2 pt-4">
+          <DialogTitle className="text-base leading-6">Session status</DialogTitle>
+          <DialogDescription className="max-w-[32rem] text-xs leading-5">
+            Runtime controls and thread state for this composer.
           </DialogDescription>
         </DialogHeader>
-        <DialogPanel className="space-y-4">
-          <div className="grid gap-3 rounded-lg border border-border/60 bg-muted/20 p-4 text-sm sm:grid-cols-2">
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Model</p>
-              <p className="font-medium text-foreground">{selectedModel}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Fast Mode</p>
-              <p className="font-medium text-foreground">{fastModeEnabled ? "On" : "Off"}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Reasoning</p>
-              <p className="font-medium text-foreground">{selectedPromptEffort ?? "Default"}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Mode</p>
-              <p className="font-medium text-foreground">
-                {interactionMode === "plan" ? "Plan" : "Default"}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-                Environment
-              </p>
-              <p className="font-medium text-foreground">
-                {formatEnvironmentLabel(envMode, envState)}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Branch</p>
-              <p className="font-medium text-foreground">{branch ?? "Unknown"}</p>
-            </div>
-          </div>
+        <DialogPanel className="space-y-4 px-4 pb-4 pt-1">
+          <StatusSection title="Runtime">
+            <dl className="grid gap-x-5 rounded-md border border-border/50 bg-muted/15 px-3 py-2 sm:grid-cols-2">
+              <StatusField label="Model" value={selectedModel ?? "Unknown"} />
+              <StatusField label="Fast mode" value={fastModeEnabled ? "On" : "Off"} />
+              <StatusField label="Reasoning" value={selectedPromptEffort ?? "Default"} />
+              <StatusField label="Mode" value={interactionMode === "plan" ? "Plan" : "Default"} />
+              <StatusField label="Environment" value={formatEnvironmentLabel(envMode, envState)} />
+              <StatusField label="Branch" value={branch ?? "Unknown"} />
+            </dl>
+          </StatusSection>
 
-          <div className="space-y-3 rounded-lg border border-border/60 bg-card p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-                  Context Window
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Latest usage reported by the active thread.
-                </p>
-                {pendingContextWindowLabel ? (
-                  <p className="text-sm text-muted-foreground">
-                    Current session: {activeContextWindowLabel ?? "Unknown"}. Next turn:{" "}
-                    {pendingContextWindowLabel}.
+          <StatusSection title="Context window">
+            <div className="rounded-md border border-border/50 bg-card px-3 py-2.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    Latest usage from the active thread.
                   </p>
+                  {pendingContextWindowLabel ? (
+                    <p className="text-xs leading-5 text-muted-foreground">
+                      Current: {activeContextWindowLabel ?? "Unknown"}. Next:{" "}
+                      {pendingContextWindowLabel}.
+                    </p>
+                  ) : null}
+                </div>
+                {contextWindow ? (
+                  <ContextWindowMeter
+                    usage={contextWindow}
+                    cumulativeCostUsd={cumulativeCostUsd}
+                    activeWindowLabel={activeContextWindowLabel}
+                    pendingWindowLabel={pendingContextWindowLabel}
+                  />
                 ) : null}
               </div>
               {contextWindow ? (
-                <ContextWindowMeter
-                  usage={contextWindow}
-                  cumulativeCostUsd={cumulativeCostUsd}
-                  activeWindowLabel={activeContextWindowLabel}
-                  pendingWindowLabel={pendingContextWindowLabel}
-                />
-              ) : null}
+                <dl className="mt-2 grid gap-x-5 border-t border-border/40 pt-2 sm:grid-cols-2">
+                  <StatusField
+                    label="Used"
+                    mono
+                    value={formatContextWindowTokens(contextWindow.usedTokens)}
+                  />
+                  <StatusField
+                    label="Remaining"
+                    mono
+                    value={formatContextWindowTokens(contextWindow.remainingTokens)}
+                  />
+                  <StatusField
+                    label="Window"
+                    mono
+                    value={formatContextWindowTokens(contextWindow.maxTokens)}
+                  />
+                  <StatusField
+                    label="Cost"
+                    mono={cumulativeCostUsd !== null}
+                    value={
+                      cumulativeCostUsd !== null
+                        ? formatCostUsd(cumulativeCostUsd)
+                        : "Not available"
+                    }
+                  />
+                </dl>
+              ) : (
+                <p className="mt-2 border-t border-border/40 pt-2 text-xs leading-5 text-muted-foreground">
+                  Context usage has not been reported yet.
+                </p>
+              )}
             </div>
-            {contextWindow ? (
-              <div className="grid gap-3 text-sm sm:grid-cols-2">
-                <div>
-                  <p className="text-muted-foreground">Used</p>
-                  <p className="font-medium text-foreground">
-                    {formatContextWindowTokens(contextWindow.usedTokens)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Remaining</p>
-                  <p className="font-medium text-foreground">
-                    {formatContextWindowTokens(contextWindow.remainingTokens)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Window</p>
-                  <p className="font-medium text-foreground">
-                    {formatContextWindowTokens(contextWindow.maxTokens)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Cost</p>
-                  <p className="font-medium text-foreground">
-                    {cumulativeCostUsd !== null
-                      ? formatCostUsd(cumulativeCostUsd)
-                      : "Not available"}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Context usage has not been reported yet for this thread.
-              </p>
-            )}
-          </div>
+          </StatusSection>
 
-          <div className="space-y-2 rounded-lg border border-border/60 bg-card p-4">
-            <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Rate Limits</p>
-            {rateLimitStatus ? (
-              <p className="text-sm text-foreground">{formatRateLimitMessage(rateLimitStatus)}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No active rate-limit warning for this thread.
-              </p>
-            )}
-          </div>
+          <StatusSection title="Rate limits">
+            <div className="rounded-md border border-border/50 bg-card px-3 py-2.5">
+              {rateLimitStatus ? (
+                <p className="text-[0.8125rem] leading-5 text-foreground">
+                  {formatRateLimitMessage(rateLimitStatus)}
+                </p>
+              ) : (
+                <p className="text-xs leading-5 text-muted-foreground">
+                  No active warning for this thread.
+                </p>
+              )}
+            </div>
+          </StatusSection>
         </DialogPanel>
-        <DialogFooter variant="bare">
-          <Button type="button" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </DialogFooter>
       </DialogPopup>
     </Dialog>
   );
