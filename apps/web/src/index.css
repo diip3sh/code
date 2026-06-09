@@ -69,10 +69,55 @@
   /* Let the renderer switch between Codex-style translucent and opaque shells
      without duplicating sidebar markup or class strings. */
   .app-sidebar-surface {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     background: var(--app-sidebar-surface, var(--card));
     box-shadow: var(--app-sidebar-shadow, none);
     backdrop-filter: var(--app-sidebar-backdrop-filter, none);
     -webkit-backdrop-filter: var(--app-sidebar-backdrop-filter, none);
+  }
+
+  .app-sidebar-surface::before {
+    content: "";
+    position: absolute;
+    inset: -72px -40px;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        220px 280px at 68% 18%,
+        color-mix(in srgb, var(--foreground) 7%, transparent),
+        transparent 70%
+      ),
+      linear-gradient(
+        115deg,
+        color-mix(in srgb, var(--background) 72%, transparent),
+        color-mix(in srgb, var(--background) 44%, transparent) 42%,
+        color-mix(in srgb, var(--foreground) 4%, transparent)
+      );
+    filter: blur(28px);
+    opacity: var(--app-sidebar-material-depth-opacity, 0.72);
+  }
+
+  .app-sidebar-surface::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, white 4%, transparent),
+        transparent 24%
+      ),
+      linear-gradient(
+        to right,
+        color-mix(in srgb, white 3%, transparent),
+        transparent 32%
+      );
+    opacity: var(--app-sidebar-material-sheen-opacity, 0.42);
   }
 
   /* Animate terminal run state in CSS so many open terminals don't schedule JS timers. */

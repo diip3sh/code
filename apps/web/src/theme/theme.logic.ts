@@ -679,20 +679,24 @@ export function buildThemeCssVariables(
         : readCodexVariable("--color-background-surface-under"),
     "--app-composer-focus-border": composerFocusBorder,
     "--app-sidebar-backdrop-filter":
-      material === "translucent" ? "blur(8px) saturate(135%)" : "none",
+      material === "translucent" ? "blur(30px) saturate(180%)" : "none",
+    "--app-sidebar-material-depth-opacity":
+      material === "translucent" ? (variant === "dark" ? "0.78" : "0.48") : "0",
+    "--app-sidebar-material-sheen-opacity":
+      material === "translucent" ? (variant === "dark" ? "0.32" : "0.2") : "0",
     "--app-sidebar-shadow":
       material === "translucent"
         ? variant === "dark"
-          ? "inset 0 1px 0 rgba(255,255,255,0.024)"
-          : "inset 0 1px 0 rgba(0,0,0,0.025)"
+          ? "inset 0 1px 0 rgba(255,255,255,0.055), inset -1px 0 0 rgba(255,255,255,0.035), 0 0 0 1px rgba(0,0,0,0.22)"
+          : "inset 0 1px 0 rgba(255,255,255,0.52), inset -1px 0 0 rgba(255,255,255,0.28), 0 0 0 1px rgba(0,0,0,0.045)"
         : variant === "dark"
           ? "inset 0 1px 0 rgba(255,255,255,0.025)"
           : "inset 0 1px 0 rgba(0,0,0,0.03)",
     "--app-sidebar-surface":
       material === "translucent"
         ? variant === "dark"
-          ? `color-mix(in srgb, ${sidebarSurfaceUnder} 72%, transparent)`
-          : `color-mix(in srgb, ${sidebarSurfaceUnder} 64%, transparent)`
+          ? `color-mix(in srgb, ${sidebarSurfaceUnder} 82%, transparent)`
+          : `color-mix(in srgb, ${sidebarSurfaceUnder} 58%, transparent)`
         : sidebarSurfaceUnder,
     "--background": readCodexVariable("--color-background-surface-under"),
     "--border": readCodexVariable("--color-border"),
