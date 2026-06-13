@@ -41,7 +41,7 @@ import { showDesktopConfirmDialog } from "./confirmDialog";
 import { openInitialBackendWindow } from "./initialBackendWindowOpen";
 import { shouldAllowMediaPermissionRequest } from "./mediaPermissions";
 import { ServerListeningDetector } from "./serverListeningDetector";
-import { syncShellEnvironment } from "./syncShellEnvironment";
+import { syncShellEnvironmentAsync } from "./syncShellEnvironment";
 import {
   getAutoUpdateDisabledReason,
   shouldBroadcastDownloadProgress,
@@ -91,8 +91,6 @@ import {
   seedDesktopUserDataProfileFromLegacy,
 } from "./desktopUserDataProfile";
 
-syncShellEnvironment();
-
 const PICK_FOLDER_CHANNEL = "desktop:pick-folder";
 const SAVE_FILE_CHANNEL = "desktop:save-file";
 const CONFIRM_CHANNEL = "desktop:confirm";
@@ -141,6 +139,7 @@ const DESKTOP_MENU_MAX_ZOOM_FACTOR = 5;
 const DPCODE_BROWSER_LABEL = "DPCODE browser";
 const browserPerfLoggingEnabled =
   process.env.DPCODE_BROWSER_PERF === "1" || process.env.T3CODE_BROWSER_PERF === "1";
+const shellEnvironmentPromise = syncShellEnvironmentAsync();
 
 type DesktopUpdateErrorContext = DesktopUpdateState["errorContext"];
 
@@ -241,6 +240,12 @@ function sanitizeLogValue(value: string): string {
 function writeDesktopLogHeader(message: string): void {
   if (!desktopLogSink) return;
   desktopLogSink.write(`[${logTimestamp()}] [${logScope("desktop")}] ${message}\n`);
+}
+
+function writeStartupTiming(phase: string): void {
+  writeDesktopLogHeader(
+    `startup timing phase=${phase} elapsedMs=${Math.round(process.uptime() * 1000)}`,
+  );
 }
 
 function writeBackendSessionBoundary(phase: "START" | "END", details: string): void {
@@ -393,7 +398,12 @@ function ensureInitialBackendWindowOpen(baseUrl: string): void {
       backendInitialWindowOpenInFlight = promise;
     },
     waitForBackendWindowReady,
-    writeLog: writeDesktopLogHeader,
+    writeLog: (message) => {
+      writeDesktopLogHeader(message);
+      if (message.startsWith("bootstrap backend ready")) {
+        writeStartupTiming("backend-ready");
+      }
+    },
     isReadinessAborted: isBackendReadinessAborted,
     formatErrorMessage,
     warn: (message, error) => {
@@ -492,6 +502,7 @@ function captureBackendOutput(child: ChildProcess.ChildProcess): void {
 }
 
 initializePackagedLogging();
+writeStartupTiming("logging-ready");
 
 function getDestructiveMenuIcon(): Electron.NativeImage | undefined {
   if (process.platform !== "darwin") return undefined;
@@ -1521,6 +1532,7 @@ function startBackend(): void {
 
   child.once("spawn", () => {
     restartAttempt = 0;
+    writeStartupTiming("backend-spawned");
   });
 
   child.on("error", (error) => {
@@ -1660,8 +1672,10 @@ async function shutdownDesktopRuntime(reason: string): Promise<void> {
       clearUpdateCheckTimeoutTimer();
       clearUpdatePollTimer();
       cancelBackendReadinessWait();
-      await disposeBrowserUsePipeServerForShutdown(reason);
-      await stopBackendAndWaitForExit();
+      await Promise.all([
+        disposeBrowserUsePipeServerForShutdown(reason),
+        stopBackendAndWaitForExit(),
+      ]);
       browserManager.dispose();
       restoreStdIoCapture?.();
       writeDesktopLogHeader(`${reason} shutdown complete`);
@@ -1963,6 +1977,7 @@ function createWindow(): BrowserWindow {
       webviewTag: true,
     },
   });
+  writeStartupTiming("window-created");
   browserManager.setWindow(window);
 
   window.webContents.on("context-menu", (event, params) => {
@@ -2016,8 +2031,10 @@ function createWindow(): BrowserWindow {
   window.webContents.on("did-finish-load", () => {
     window.setTitle(APP_DISPLAY_NAME);
     emitUpdateState();
+    writeStartupTiming("renderer-did-finish-load");
   });
   window.once("ready-to-show", () => {
+    writeStartupTiming("window-ready-to-show");
     window.show();
   });
 
@@ -2103,9 +2120,16 @@ async function bootstrap(): Promise<void> {
 
   registerIpcHandlers();
   writeDesktopLogHeader("bootstrap ipc handlers registered");
+
+  if (!isDevelopment) {
+    ensureInitialBackendWindowOpen(backendHttpUrl);
+  }
+
+  await shellEnvironmentPromise;
+  writeStartupTiming("shell-environment-ready");
+
   startBackend();
   writeDesktopLogHeader("bootstrap backend start requested");
-
   if (isDevelopment) {
     void waitForBackendWindowReady(backendHttpUrl)
       .then((source) => {
@@ -2130,8 +2154,6 @@ async function bootstrap(): Promise<void> {
       });
     return;
   }
-
-  ensureInitialBackendWindowOpen(backendHttpUrl);
 }
 
 app.on("before-quit", (event) => {
@@ -2162,6 +2184,7 @@ if (hasSingleInstanceLock) {
     .whenReady()
     .then(() => {
       writeDesktopLogHeader("app ready");
+      writeStartupTiming("app-ready");
       configureAppIdentity();
       configureMediaPermissions();
       configureApplicationMenu();

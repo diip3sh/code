@@ -46,8 +46,6 @@ export const MentionChipIcon = memo(function MentionChipIcon(props: {
   if (kind === "directory") {
     return <FolderClosed className={COMPOSER_INLINE_MENTION_CHIP_ICON_CLASS_NAME} />;
   }
-  // Delegate file rendering to FileEntryIcon so we inherit the onError
-  // fallback that swaps to the Lucide FileIcon if the Seti asset is missing.
   return (
     <FileEntryIcon
       pathValue={props.path}

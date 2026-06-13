@@ -3,7 +3,7 @@
 // Exports: shell candidate resolution plus PATH/environment capture utilities.
 
 import * as OS from "node:os";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 
 const PATH_CAPTURE_START = "__T3CODE_PATH_START__";
 const PATH_CAPTURE_END = "__T3CODE_PATH_END__";
@@ -14,6 +14,19 @@ type ExecFileSyncLike = (
   args: ReadonlyArray<string>,
   options: { encoding: "utf8"; timeout: number },
 ) => string;
+
+export type ExecFileLike = (
+  file: string,
+  args: ReadonlyArray<string>,
+  options: { encoding: "utf8"; timeout: number },
+  callback: (error: Error | null, stdout: string) => void,
+) => void;
+
+const execFileAsync: ExecFileLike = (file, args, options, callback) => {
+  execFile(file, args, options, (error, stdout) => {
+    callback(error, stdout);
+  });
+};
 
 function trimNonEmpty(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -84,6 +97,18 @@ export function readPathFromLaunchctl(
         encoding: "utf8",
         timeout: 2000,
       }),
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+export async function readPathFromLaunchctlAsync(
+  runExecFile: ExecFileLike = execFileAsync,
+): Promise<string | undefined> {
+  try {
+    return trimNonEmpty(
+      await execFileUtf8(runExecFile, "/bin/launchctl", ["getenv", "PATH"], 2000),
     );
   } catch {
     return undefined;
@@ -165,6 +190,12 @@ export type ShellEnvironmentReader = (
   execFile?: ExecFileSyncLike,
 ) => Partial<Record<string, string>>;
 
+export type AsyncShellEnvironmentReader = (
+  shell: string,
+  names: ReadonlyArray<string>,
+  execFile?: ExecFileLike,
+) => Promise<Partial<Record<string, string>>>;
+
 export const readEnvironmentFromLoginShell: ShellEnvironmentReader = (
   shell,
   names,
@@ -179,6 +210,47 @@ export const readEnvironmentFromLoginShell: ShellEnvironmentReader = (
     timeout: 5000,
   });
 
+  const environment: Partial<Record<string, string>> = {};
+  for (const name of names) {
+    const value = extractEnvironmentValue(output, name);
+    if (value !== undefined) {
+      environment[name] = value;
+    }
+  }
+
+  return environment;
+};
+
+function execFileUtf8(
+  runExecFile: ExecFileLike,
+  file: string,
+  args: ReadonlyArray<string>,
+  timeout = 5000,
+): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    runExecFile(file, args, { encoding: "utf8", timeout }, (error, stdout) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(stdout);
+    });
+  });
+}
+
+export const readEnvironmentFromLoginShellAsync: AsyncShellEnvironmentReader = async (
+  shell,
+  names,
+  runExecFile = execFileAsync,
+) => {
+  if (names.length === 0) {
+    return {};
+  }
+
+  const output = await execFileUtf8(runExecFile, shell, [
+    "-ilc",
+    buildEnvironmentCaptureCommand(names),
+  ]);
   const environment: Partial<Record<string, string>> = {};
   for (const name of names) {
     const value = extractEnvironmentValue(output, name);

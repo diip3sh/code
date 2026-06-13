@@ -284,31 +284,36 @@ export default function BranchToolbar({
       <div className="flex items-center gap-2">
         {showEnvPicker ? (
           <Popover open={envPickerOpen} onOpenChange={setEnvPickerOpen}>
-            <PopoverTrigger className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-[length:var(--app-font-size-ui-xs,10px)] font-normal text-[var(--color-text-foreground-secondary)] transition-colors hover:bg-[var(--color-background-elevated-secondary)] hover:text-[var(--color-text-foreground)]">
+            <PopoverTrigger className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-[length:var(--app-font-size-ui-xs,10px)] font-normal text-[var(--color-text-foreground-secondary)] transition-[color,background-color,transform] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[var(--color-background-elevated-secondary)] hover:text-[var(--color-text-foreground)] active:scale-[0.97] motion-reduce:transition-colors">
               {environmentPresentation.mode === "local" ? (
                 <PiLaptop className="size-3.5" />
               ) : (
                 <WorktreeGlyph className="size-3.5" />
               )}
               {environmentPresentation.shortLabel}
-              <ChevronDownIcon className="size-3 opacity-60" />
+              <ChevronDownIcon
+                className={cn(
+                  "size-3 opacity-60 transition-transform duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
+                  envPickerOpen && "rotate-180",
+                )}
+              />
             </PopoverTrigger>
             <PopoverPopup
               align="start"
               side="top"
-              sideOffset={6}
-              className="w-56 [&_[data-slot=popover-viewport]]:py-0 [&_[data-slot=popover-viewport]]:[--viewport-inline-padding:0px]"
+              sideOffset={8}
+              className="w-60 rounded-lg shadow-lg/10 transition-[scale,opacity,translate] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] data-starting-style:translate-y-1 data-starting-style:scale-[0.98] motion-reduce:transition-opacity motion-reduce:data-starting-style:translate-y-0 motion-reduce:data-starting-style:scale-100 [&_[data-slot=popover-viewport]]:py-0 [&_[data-slot=popover-viewport]]:[--viewport-inline-padding:0px]"
             >
-              <div className="py-1.5">
-                <p className="px-3 pb-1 pt-1 text-[11px] font-medium text-[var(--color-text-foreground-secondary)]">
+              <div className="space-y-1 p-1.5">
+                <p className="px-2 pb-1 pt-1 text-[10px] font-medium text-[var(--color-text-foreground-secondary)]">
                   Continue in
                 </p>
                 {environmentPresentation.mode === "local" ? (
-                  <div className="flex w-full items-center gap-2 px-3 py-1.5 text-sm">
-                    <PiLaptop className="size-4 text-[var(--color-text-foreground-secondary)]" />
+                  <div className="grid min-h-8 w-full grid-cols-[1rem_1fr_1rem] items-center gap-2 rounded-md bg-[color-mix(in_srgb,var(--color-text-foreground)_12%,transparent)] px-2 text-xs font-medium text-[var(--color-text-foreground)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--color-text-foreground)_8%,transparent)]">
+                    <PiLaptop className="size-3.5 text-[var(--color-text-foreground-secondary)]" />
                     <span>{environmentPresentation.localOptionLabel}</span>
                     <svg
-                      className="ml-auto size-4 text-[var(--color-text-foreground)]"
+                      className="size-3.5 text-[var(--color-text-foreground-secondary)]"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -322,35 +327,35 @@ export default function BranchToolbar({
                 ) : (
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm text-[var(--color-text-foreground)] transition-colors hover:bg-[var(--color-background-elevated-secondary)]"
+                    className="grid min-h-8 w-full grid-cols-[1rem_1fr] items-center gap-2 rounded-md px-2 text-left text-xs text-[var(--color-text-foreground)] transition-[color,background-color,transform] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[color-mix(in_srgb,var(--color-text-foreground)_6%,transparent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:scale-[0.97] motion-reduce:transition-colors"
                     onClick={() => {
                       setEnvPickerOpen(false);
                       onEnvModeChange("local");
                     }}
                   >
-                    <PiLaptop className="size-4 text-[var(--color-text-foreground-secondary)]" />
+                    <PiLaptop className="size-3.5 text-[var(--color-text-foreground-secondary)]" />
                     <span>{environmentPresentation.localOptionLabel}</span>
                   </button>
                 )}
                 {canSwitchToWorktree ? (
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm text-[var(--color-text-foreground)] transition-colors hover:bg-[var(--color-background-elevated-secondary)]"
+                    className="grid min-h-8 w-full grid-cols-[1rem_1fr] items-center gap-2 rounded-md px-2 text-left text-xs text-[var(--color-text-foreground)] transition-[color,background-color,transform] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[color-mix(in_srgb,var(--color-text-foreground)_6%,transparent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:scale-[0.97] motion-reduce:transition-colors"
                     onClick={() => {
                       setEnvPickerOpen(false);
                       onEnvModeChange("worktree");
                     }}
                   >
-                    <WorktreeGlyph className="size-4 text-[var(--color-text-foreground-secondary)]" />
+                    <WorktreeGlyph className="size-3.5 text-[var(--color-text-foreground-secondary)]" />
                     <span>New worktree</span>
                   </button>
                 ) : null}
                 {effectiveEnvMode === "worktree" && !canHandoffToLocal ? (
-                  <div className="flex w-full items-center gap-2 px-3 py-1.5 text-sm">
-                    <WorktreeGlyph className="size-4 text-[var(--color-text-foreground-secondary)]" />
+                  <div className="grid min-h-8 w-full grid-cols-[1rem_1fr_1rem] items-center gap-2 rounded-md bg-[color-mix(in_srgb,var(--color-text-foreground)_12%,transparent)] px-2 text-xs font-medium text-[var(--color-text-foreground)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--color-text-foreground)_8%,transparent)]">
+                    <WorktreeGlyph className="size-3.5 text-[var(--color-text-foreground-secondary)]" />
                     <span>{environmentPresentation.worktreeOptionLabel}</span>
                     <svg
-                      className="ml-auto size-4 text-[var(--color-text-foreground)]"
+                      className="size-3.5 text-[var(--color-text-foreground-secondary)]"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -365,40 +370,40 @@ export default function BranchToolbar({
                 {canHandoffToWorktree && onHandoffToWorktree ? (
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm text-[var(--color-text-foreground)] transition-colors hover:bg-[var(--color-background-elevated-secondary)] disabled:pointer-events-none disabled:opacity-50"
+                    className="grid min-h-8 w-full grid-cols-[1rem_1fr] items-center gap-2 rounded-md px-2 text-left text-xs text-[var(--color-text-foreground)] transition-[color,background-color,transform] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[color-mix(in_srgb,var(--color-text-foreground)_6%,transparent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:scale-[0.97] motion-reduce:transition-colors disabled:pointer-events-none disabled:opacity-50"
                     disabled={handoffBusy}
                     onClick={() => {
                       setEnvPickerOpen(false);
                       onHandoffToWorktree();
                     }}
                   >
-                    <WorktreeGlyph className="size-4 text-[var(--color-text-foreground-secondary)]" />
+                    <WorktreeGlyph className="size-3.5 text-[var(--color-text-foreground-secondary)]" />
                     <span>Hand off to new worktree</span>
                   </button>
                 ) : null}
                 {canHandoffToLocal && onHandoffToLocal ? (
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm text-[var(--color-text-foreground)] transition-colors hover:bg-[var(--color-background-elevated-secondary)] disabled:pointer-events-none disabled:opacity-50"
+                    className="grid min-h-8 w-full grid-cols-[1rem_1fr] items-center gap-2 rounded-md px-2 text-left text-xs text-[var(--color-text-foreground)] transition-[color,background-color,transform] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[color-mix(in_srgb,var(--color-text-foreground)_6%,transparent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:scale-[0.97] motion-reduce:transition-colors disabled:pointer-events-none disabled:opacity-50"
                     disabled={handoffBusy}
                     onClick={() => {
                       setEnvPickerOpen(false);
                       onHandoffToLocal();
                     }}
                   >
-                    <HandoffIcon className="size-4 text-[var(--color-text-foreground-secondary)]" />
+                    <HandoffIcon className="size-3.5 text-[var(--color-text-foreground-secondary)]" />
                     <span>Hand off to local</span>
                   </button>
                 ) : null}
               </div>
 
-              <div className="mx-3 border-t border-[color:var(--color-border-light)]" />
+              <div className="mx-3 my-1 border-t border-[color:var(--color-border-light)]" />
 
-              <div className="py-1.5">
+              <div className="p-1.5">
                 <Collapsible open={rateLimitsOpen} onOpenChange={setRateLimitsOpen}>
-                  <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[var(--color-text-foreground)] transition-colors hover:bg-[var(--color-background-elevated-secondary)]">
+                  <CollapsibleTrigger className="flex min-h-8 w-full items-center gap-2 rounded-md px-2 text-xs font-medium text-[var(--color-text-foreground)] transition-[color,background-color,transform] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[color-mix(in_srgb,var(--color-text-foreground)_6%,transparent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:scale-[0.97] motion-reduce:transition-colors">
                     <svg
-                      className="size-4 text-[var(--color-text-foreground-secondary)]"
+                      className="size-3.5 text-[var(--color-text-foreground-secondary)]"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -409,15 +414,15 @@ export default function BranchToolbar({
                       <circle cx="12" cy="12" r="10" />
                       <polyline points="12 6 12 12 16 14" />
                     </svg>
-                    <span>Rate limits remaining</span>
+                    <span className="flex-1 text-left">Rate limits remaining</span>
                     <ChevronRightIcon
                       className={cn(
-                        "ml-auto size-3.5 text-[var(--color-text-foreground-secondary)] transition-transform duration-150",
+                        "size-3.5 shrink-0 text-[var(--color-text-foreground-secondary)] transition-transform duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
                         rateLimitsOpen && "rotate-90",
                       )}
                     />
                   </CollapsibleTrigger>
-                  <CollapsiblePanel>
+                  <CollapsiblePanel className="transition-[height,opacity] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] data-starting-style:opacity-0 data-ending-style:opacity-0 motion-reduce:transition-none">
                     <ProviderUsagePanelContent
                       provider={activeProvider}
                       rateLimits={usageSummary.rateLimits}
@@ -425,7 +430,8 @@ export default function BranchToolbar({
                       isLoading={usageSummary.isLoading}
                       learnMoreHref={usageSummary.learnMoreHref}
                       showTitle={false}
-                      className="px-3 pb-1 pt-1"
+                      compact
+                      className="px-2 pb-1.5 pt-1.5"
                     />
                   </CollapsiblePanel>
                 </Collapsible>

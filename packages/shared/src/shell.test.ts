@@ -6,7 +6,9 @@ import {
   mergePathEntries,
   readEnvironmentFromLoginShell,
   readPathFromLaunchctl,
+  readPathFromLaunchctlAsync,
   readPathFromLoginShell,
+  readEnvironmentFromLoginShellAsync,
   resolveLoginShell,
 } from "./shell";
 
@@ -93,6 +95,39 @@ describe("readPathFromLaunchctl", () => {
     });
 
     expect(readPathFromLaunchctl(execFile)).toBeUndefined();
+  });
+});
+
+describe("async shell environment readers", () => {
+  it("reads PATH from launchctl without blocking", async () => {
+    const execFile = vi.fn((_file, _args, _options, callback) => {
+      callback(null, "/opt/homebrew/bin:/usr/bin\n");
+    });
+
+    await expect(readPathFromLaunchctlAsync(execFile)).resolves.toBe("/opt/homebrew/bin:/usr/bin");
+  });
+
+  it("reads named values from a login shell without blocking", async () => {
+    const execFile = vi.fn((_file, _args, _options, callback) => {
+      callback(
+        null,
+        [
+          "__T3CODE_ENV_PATH_START__",
+          "/opt/homebrew/bin:/usr/bin",
+          "__T3CODE_ENV_PATH_END__",
+          "__T3CODE_ENV_SSH_AUTH_SOCK_START__",
+          "/tmp/agent.sock",
+          "__T3CODE_ENV_SSH_AUTH_SOCK_END__",
+        ].join("\n"),
+      );
+    });
+
+    await expect(
+      readEnvironmentFromLoginShellAsync("/bin/zsh", ["PATH", "SSH_AUTH_SOCK"], execFile),
+    ).resolves.toEqual({
+      PATH: "/opt/homebrew/bin:/usr/bin",
+      SSH_AUTH_SOCK: "/tmp/agent.sock",
+    });
   });
 });
 

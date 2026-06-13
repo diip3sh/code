@@ -1,11 +1,6 @@
 import { type ResolvedKeybindingsConfig } from "@t3tools/contracts";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Outlet,
-  createFileRoute,
-  useLocation,
-  useNavigate,
-} from "@tanstack/react-router";
+import { Outlet, createFileRoute, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -29,10 +24,7 @@ import { isTerminalFocused } from "../lib/terminalFocus";
 import { serverConfigQueryOptions } from "../lib/serverReactQuery";
 import { resolveShortcutCommand } from "../keybindings";
 import { useStore } from "../store";
-import {
-  selectThreadTerminalState,
-  useTerminalStateStore,
-} from "../terminalStateStore";
+import { selectThreadTerminalState, useTerminalStateStore } from "../terminalStateStore";
 import { useThreadSelectionStore } from "../threadSelectionStore";
 import { onServerMaintenanceUpdated } from "../wsNativeApi";
 import { useAppSettings } from "~/appSettings";
@@ -42,12 +34,7 @@ import {
   providerUnavailableReason,
 } from "~/lib/providerAvailability";
 import { toastManager } from "~/components/ui/toast";
-import {
-  Sidebar,
-  SidebarProvider,
-  SidebarRail,
-  useSidebar,
-} from "~/components/ui/sidebar";
+import { Sidebar, SidebarProvider, SidebarRail, useSidebar } from "~/components/ui/sidebar";
 
 const EMPTY_KEYBINDINGS: ResolvedKeybindingsConfig = [];
 const THREAD_SIDEBAR_WIDTH_STORAGE_KEY = "chat_thread_sidebar_width";
@@ -62,15 +49,11 @@ function ThreadRetentionMaintenanceToast() {
 
   useEffect(() => {
     return onServerMaintenanceUpdated((event) => {
-      if (
-        event.type !== "maintenance" ||
-        event.payload.task !== "thread-retention"
-      ) {
+      if (event.type !== "maintenance" || event.payload.task !== "thread-retention") {
         return;
       }
 
-      const { state, purgedCount, totalCount, freePageCount, error } =
-        event.payload;
+      const { state, purgedCount, totalCount, freePageCount, error } = event.payload;
       const eventMs = Date.parse(event.payload.at);
       const isStaleEvent = Number.isFinite(eventMs)
         ? Date.now() - eventMs > MAINTENANCE_EVENT_STALE_MS
@@ -216,12 +199,8 @@ function ChatRouteGlobalShortcuts() {
   const { settings: appSettings } = useAppSettings();
   const { toggleSidebar } = useSidebar();
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
-  const clearSelection = useThreadSelectionStore(
-    (state) => state.clearSelection,
-  );
-  const selectedThreadIdsSize = useThreadSelectionStore(
-    (state) => state.selectedThreadIds.size,
-  );
+  const clearSelection = useThreadSelectionStore((state) => state.clearSelection);
+  const selectedThreadIdsSize = useThreadSelectionStore((state) => state.selectedThreadIds.size);
   const {
     activeContextThreadId,
     activeDraftThread,
@@ -231,15 +210,9 @@ function ChatRouteGlobalShortcuts() {
     projects,
   } = useHandleNewThread();
   const { handleNewChat } = useHandleNewChat();
-  const latestProjectId = useLatestProjectStore(
-    (state) => state.latestProjectId,
-  );
-  const setLatestProjectId = useLatestProjectStore(
-    (state) => state.setLatestProjectId,
-  );
-  const clearLatestProjectId = useLatestProjectStore(
-    (state) => state.clearLatestProjectId,
-  );
+  const latestProjectId = useLatestProjectStore((state) => state.latestProjectId);
+  const setLatestProjectId = useLatestProjectStore((state) => state.setLatestProjectId);
+  const clearLatestProjectId = useLatestProjectStore((state) => state.clearLatestProjectId);
   const threadsHydrated = useStore((state) => state.threadsHydrated);
   useDisposableThreadLifecycle(activeContextThreadId);
   const serverConfigQuery = useQuery(serverConfigQueryOptions());
@@ -248,10 +221,7 @@ function ChatRouteGlobalShortcuts() {
   const providerStatuses = serverConfigQuery.data?.providers ?? [];
   const activeThreadTerminalState = useTerminalStateStore((state) =>
     activeContextThreadId
-      ? selectThreadTerminalState(
-          state.terminalStateByThreadId,
-          activeContextThreadId,
-        )
+      ? selectThreadTerminalState(state.terminalStateByThreadId, activeContextThreadId)
       : null,
   );
   const terminalOpen = activeThreadTerminalState?.terminalOpen ?? false;
@@ -260,16 +230,9 @@ function ChatRouteGlobalShortcuts() {
     activeProjectId !== null
       ? (projects.find((project) => project.id === activeProjectId) ?? null)
       : null;
-  const activeProjectScripts =
-    activeProject?.kind === "project" ? activeProject.scripts : [];
-  const currentProjectId = resolveCurrentProjectTargetId(
-    projects,
-    activeProject?.id ?? null,
-  );
-  const latestUsableProjectId = resolveLatestProjectTargetId(
-    projects,
-    latestProjectId,
-  );
+  const activeProjectScripts = activeProject?.kind === "project" ? activeProject.scripts : [];
+  const currentProjectId = resolveCurrentProjectTargetId(projects, activeProject?.id ?? null);
+  const latestUsableProjectId = resolveLatestProjectTargetId(projects, latestProjectId);
 
   useEffect(() => {
     if (!currentProjectId) {
@@ -282,12 +245,7 @@ function ChatRouteGlobalShortcuts() {
     if (threadsHydrated && latestProjectId && latestUsableProjectId === null) {
       clearLatestProjectId(latestProjectId);
     }
-  }, [
-    clearLatestProjectId,
-    latestProjectId,
-    latestUsableProjectId,
-    threadsHydrated,
-  ]);
+  }, [clearLatestProjectId, latestProjectId, latestUsableProjectId, threadsHydrated]);
 
   useEffect(() => {
     const onWindowKeyDown = (event: KeyboardEvent) => {
@@ -320,10 +278,7 @@ function ChatRouteGlobalShortcuts() {
         if (appNavigationShortcut === "back" && navigationState.canGoBack) {
           goBackInAppHistory();
         }
-        if (
-          appNavigationShortcut === "forward" &&
-          navigationState.canGoForward
-        ) {
+        if (appNavigationShortcut === "forward" && navigationState.canGoForward) {
           goForwardInAppHistory();
         }
         return;
@@ -364,17 +319,13 @@ function ChatRouteGlobalShortcuts() {
       }
 
       if (command === "chat.newTerminal") {
-        const projectId =
-          activeProjectId ?? (allowProjectFallback ? projects[0]?.id : null);
+        const projectId = activeProjectId ?? (allowProjectFallback ? projects[0]?.id : null);
         if (!projectId) return;
         event.preventDefault();
         event.stopPropagation();
         void handleNewThread(projectId, {
           branch: activeThread?.branch ?? activeDraftThread?.branch ?? null,
-          worktreePath:
-            activeThread?.worktreePath ??
-            activeDraftThread?.worktreePath ??
-            null,
+          worktreePath: activeThread?.worktreePath ?? activeDraftThread?.worktreePath ?? null,
           envMode:
             activeDraftThread?.envMode ??
             resolveThreadEnvironmentMode({
@@ -402,9 +353,7 @@ function ChatRouteGlobalShortcuts() {
                 : "gemini";
         const normalizedStatus = normalizeProviderStatusForLocalConfig({
           provider,
-          status:
-            providerStatuses.find((entry) => entry.provider === provider) ??
-            null,
+          status: providerStatuses.find((entry) => entry.provider === provider) ?? null,
           customBinaryPath:
             provider === "codex"
               ? appSettings.codexBinaryPath
@@ -423,18 +372,14 @@ function ChatRouteGlobalShortcuts() {
           });
           return;
         }
-        const projectId =
-          activeProjectId ?? (allowProjectFallback ? projects[0]?.id : null);
+        const projectId = activeProjectId ?? (allowProjectFallback ? projects[0]?.id : null);
         if (!projectId) return;
         event.preventDefault();
         event.stopPropagation();
         void handleNewThread(projectId, {
           provider,
           branch: activeThread?.branch ?? activeDraftThread?.branch ?? null,
-          worktreePath:
-            activeThread?.worktreePath ??
-            activeDraftThread?.worktreePath ??
-            null,
+          worktreePath: activeThread?.worktreePath ?? activeDraftThread?.worktreePath ?? null,
           envMode:
             activeDraftThread?.envMode ??
             resolveThreadEnvironmentMode({
@@ -451,8 +396,7 @@ function ChatRouteGlobalShortcuts() {
       event.stopPropagation();
       void handleNewThread(currentProjectId, {
         branch: activeThread?.branch ?? activeDraftThread?.branch ?? null,
-        worktreePath:
-          activeThread?.worktreePath ?? activeDraftThread?.worktreePath ?? null,
+        worktreePath: activeThread?.worktreePath ?? activeDraftThread?.worktreePath ?? null,
         envMode:
           activeDraftThread?.envMode ??
           resolveThreadEnvironmentMode({
@@ -532,8 +476,7 @@ const SIDEBAR_GAP_CLASS = {
 
 const SIDEBAR_INNER_CLASS = {
   left: "app-sidebar-surface border-r border-[color:var(--color-border-light)]",
-  right:
-    "app-sidebar-surface border-l border-[color:var(--color-border-light)]",
+  right: "app-sidebar-surface border-l border-[color:var(--color-border-light)]",
 } as const;
 
 function ChatRouteLayout() {

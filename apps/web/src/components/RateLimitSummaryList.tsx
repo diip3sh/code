@@ -13,8 +13,10 @@ import {
 
 export function RateLimitSummaryList({
   rateLimits,
+  compact = false,
 }: {
   rateLimits: ReadonlyArray<ProviderRateLimit>;
+  compact?: boolean;
 }) {
   const rows = useMemo(() => deriveVisibleRateLimitRows(rateLimits), [rateLimits]);
 
@@ -31,15 +33,23 @@ export function RateLimitSummaryList({
       {rows.map((row) => (
         <div
           key={row.id}
-          className="flex items-center justify-between text-[length:var(--app-font-size-chat,12px)]"
+          className={
+            compact
+              ? "grid grid-cols-[1fr_auto_auto] items-baseline gap-x-2 text-[11px]"
+              : "flex items-center justify-between text-[length:var(--app-font-size-chat,12px)]"
+          }
         >
           <span className="font-medium text-foreground">{row.label}</span>
-          <span className="flex items-center gap-2 tabular-nums text-[length:var(--app-font-size-chat-meta,10px)] text-muted-foreground">
-            <span className="text-foreground">
-              {formatRateLimitRemainingPercent(row.remainingPercent)}
-            </span>
-            {row.resetsAt ? <span>{formatRateLimitResetTime(row.resetsAt)}</span> : null}
+          <span className="tabular-nums text-[length:var(--app-font-size-chat-meta,10px)] text-foreground">
+            {formatRateLimitRemainingPercent(row.remainingPercent)}
           </span>
+          {row.resetsAt ? (
+            <span className="min-w-10 text-right tabular-nums text-[length:var(--app-font-size-chat-meta,10px)] text-muted-foreground">
+              {formatRateLimitResetTime(row.resetsAt)}
+            </span>
+          ) : compact ? (
+            <span className="min-w-10" />
+          ) : null}
         </div>
       ))}
     </>

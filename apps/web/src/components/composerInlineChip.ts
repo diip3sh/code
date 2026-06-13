@@ -10,22 +10,21 @@ export const COMPOSER_INLINE_CHIP_CLASS_NAME =
 export const COMPOSER_ATTACHMENT_CHIP_CLASS_NAME =
   "inline-flex min-w-0 max-w-full items-center gap-0.5 rounded-full border border-[color:var(--color-border)] bg-[var(--composer-surface)] p-0.5 text-[11px] font-medium text-[var(--color-text-foreground)]";
 
-// Wrapper for file/folder mention chips. Mirrors the skill pill (same tint
-// and rounding) but with tighter padding and smaller text so a path chip
-// reads as a compact variant of a skill chip.
+// Inline references use colored text and matching monochrome icons without a
+// pill background so they read naturally inside the prompt.
 export const COMPOSER_INLINE_MENTION_CHIP_CLASS_NAME =
-  "inline-flex max-w-full select-none items-center gap-0.5 rounded-sm bg-[var(--info-foreground)]/10 pl-1.5 pr-2 py-0.5 text-[11px] font-medium text-[var(--info-foreground)]/80 align-middle -translate-y-px";
+  "inline-flex max-w-full select-none items-center gap-1 font-medium leading-[inherit] text-[var(--info-foreground)] bg-[var(--info-foreground)]/5 px-1.5 rounded-sm align-middle -translate-y-px";
 
 export const COMPOSER_INLINE_SKILL_CHIP_CLASS_NAME =
-  "inline-flex max-w-full select-none items-center gap-1 rounded-md bg-[var(--info)]/10 px-2 py-0.5 text-[var(--info-foreground)]/80 align-middle -translate-y-px";
+  "inline-flex max-w-full select-none items-center gap-1 font-medium leading-[inherit] text-[var(--info-foreground)] bg-[var(--info-foreground)]/5 px-1.5 rounded-sm align-middle -translate-y-px";
 
 export const COMPOSER_INLINE_SKILL_CHIP_ICON_CLASS_NAME = "size-3.5 shrink-0";
 
 export const COMPOSER_INLINE_CHIP_ICON_CLASS_NAME = "size-3.5 shrink-0 opacity-85";
 
-export const COMPOSER_INLINE_MENTION_CHIP_ICON_CLASS_NAME = "size-4 shrink-0";
+export const COMPOSER_INLINE_MENTION_CHIP_ICON_CLASS_NAME = "size-3.5 shrink-0 text-current";
 
-export const COMPOSER_INLINE_CHIP_LABEL_CLASS_NAME = "truncate select-none leading-tight";
+export const COMPOSER_INLINE_CHIP_LABEL_CLASS_NAME = "truncate select-none leading-[inherit]";
 
 export const COMPOSER_INLINE_CHIP_DISMISS_BUTTON_CLASS_NAME =
   "ml-0.5 inline-flex size-3.5 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground/72 transition-colors hover:bg-foreground/6 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";

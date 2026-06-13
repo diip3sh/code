@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { syncShellEnvironment } from "./syncShellEnvironment";
+import { syncShellEnvironment, syncShellEnvironmentAsync } from "./syncShellEnvironment";
 
 describe("syncShellEnvironment", () => {
   it("hydrates PATH and missing SSH_AUTH_SOCK from the login shell on macOS", () => {
@@ -193,5 +193,27 @@ describe("syncShellEnvironment", () => {
     expect(readEnvironment).not.toHaveBeenCalled();
     expect(env.PATH).toBe("/usr/bin");
     expect(env.SSH_AUTH_SOCK).toBe("/tmp/inherited.sock");
+  });
+});
+
+describe("syncShellEnvironmentAsync", () => {
+  it("hydrates the environment without blocking on the login-shell reader", async () => {
+    const env: NodeJS.ProcessEnv = {
+      SHELL: "/bin/zsh",
+      PATH: "/usr/bin",
+    };
+    const readEnvironment = vi.fn(async () => ({
+      PATH: "/opt/homebrew/bin:/usr/bin",
+      SSH_AUTH_SOCK: "/tmp/login-shell.sock",
+    }));
+
+    await syncShellEnvironmentAsync(env, {
+      platform: "darwin",
+      readEnvironment,
+    });
+
+    expect(readEnvironment).toHaveBeenCalledTimes(1);
+    expect(env.PATH).toBe("/opt/homebrew/bin:/usr/bin");
+    expect(env.SSH_AUTH_SOCK).toBe("/tmp/login-shell.sock");
   });
 });
